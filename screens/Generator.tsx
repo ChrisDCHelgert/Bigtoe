@@ -114,8 +114,12 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
       promptStr += `. Shot on a soft background with professional studio lighting`;
     }
 
-    // 5. Technical (Auto-Enhance)
-    promptStr += `, soft shadows, high-res lens, focus on skin texture, 8k, shallow depth of field.`;
+    // 5. Technical (Strict Realism Standards)
+    if (params.realism === 'photo') {
+      promptStr += `, Canon EOS 5D Mark IV, 85mm lens, f/1.8, ISO 100. Hyper-realistic skin texture, visible pores, anatomically perfect, 5 toes, natural joint alignment, subsurface scattering, 8k resolution, raw photo.`;
+    } else {
+      promptStr += `, anime style, vibrant colors.`;
+    }
 
     // 6. User Custom
     if (prompt) {

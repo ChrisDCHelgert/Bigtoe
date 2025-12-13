@@ -13,13 +13,14 @@ export const enhancePrompt = async (currentPrompt: string): Promise<string> => {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `You are a prompt engineer for Stable Diffusion XL. Enhance this prompt to generata a photorealistic, high-end fashion photography style image of feet.
-        Include details about:
-        1. Lighting (e.g., golden hour, cinematic, soft studio light)
-        2. Texture (e.g., hyper-realistic skin pores, soft focus)
-        3. Camera (e.g., 85mm lens, f/1.8, bokeh)
-        4. Composition (e.g., low angle, macro shot)
+            text: `You are a prompt engineer for Stable Diffusion XL. Enhance this prompt to generate a hyper-realistic, anatomically correct image of feet.
         
+        CRITICAL RULES:
+        - MUST specify "perfectly anatomically correct feet, 5 toes per foot, natural toe alignment".
+        - MUST specify "Canon EOS 5D Mark IV, 85mm f/1.8 lens, incredible detail".
+        - Focus on skin texture (pores, wrinkles, natural veins), realistic lighting (subsurface scattering), and depth of field.
+        - NO plastic skin, NO blurry joints, NO extra toes.
+
         Original Input: "${currentPrompt}"
         
         Output ONLY the enhanced prompt string. No explanations.` }]

@@ -6,27 +6,30 @@ import { Button } from '../components/Button';
 import { UserProfile } from '../types';
 
 interface ResultProps {
-  currentImage: string | null;
+  result: { url: string; metadata: any } | null;
   onSave: (image: any) => void;
   handleConsumption: (amount: number, type: 'generate' | 'upscale') => void;
   user: UserProfile;
 }
 
-export const Result: React.FC<ResultProps> = ({ currentImage, onSave, handleConsumption, user }) => {
+export const Result: React.FC<ResultProps> = ({ result, onSave, handleConsumption, user }) => {
   const navigate = useNavigate();
 
-  if (!currentImage) {
+  if (!result) {
     navigate('/generator');
     return null;
   }
 
+  const { url, metadata } = result;
+
   const handleSave = () => {
     const newImage = {
       id: Date.now(),
-      url: currentImage,
+      url: url,
       tag: 'Saved',
       date: new Date().toISOString(),
       isFavorite: false,
+      metadata
     };
     onSave(newImage);
     navigate('/gallery');
@@ -56,11 +59,18 @@ export const Result: React.FC<ResultProps> = ({ currentImage, onSave, handleCons
         </div>
       </header>
 
-      <div className="flex-1 relative group">
-        <img src={currentImage} alt="Generated Result" className="w-full h-full object-cover" />
+      <div className="flex-1 relative group bg-black/40">
+        <img src={url} alt="Generated Result" className="w-full h-full object-contain" />
         <button className="absolute bottom-4 right-4 p-3 bg-black/50 backdrop-blur-md rounded-full text-white hover:bg-black/70 transition-colors">
           <Maximize2 size={20} />
         </button>
+        {/* Metadata Overlay */}
+        <div className="absolute bottom-16 left-4 right-16">
+          <div className="bg-black/60 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+            <h3 className="text-white font-bold text-sm mb-1">{metadata?.title || 'Generiertes Bild'}</h3>
+            <p className="text-gray-300 text-xs line-clamp-2 italic">"{metadata?.fullPrompt}"</p>
+          </div>
+        </div>
       </div>
 
       <div className="bg-brand-card border-t border-white/10 p-6 space-y-4 rounded-t-3xl -mt-6 relative z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">

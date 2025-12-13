@@ -22,7 +22,7 @@ const App: React.FC = () => {
     settings: { language: 'de', trackingEnabled: true }
   });
 
-  const [lastGeneratedImage, setLastGeneratedImage] = useState<string | null>(null);
+  const [lastGeneratedImage, setLastGeneratedImage] = useState<{ url: string; metadata: any } | null>(null);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
 
   const handleConsumption = (amount: number, type: 'generate' | 'upscale') => {
@@ -43,8 +43,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleGenerate = (url: string) => {
-    setLastGeneratedImage(url);
+  const handleGenerate = (url: string, metadata: any) => {
+    setLastGeneratedImage({ url, metadata });
   };
 
   const handleSaveToGallery = (image: any) => {
@@ -122,7 +122,7 @@ const App: React.FC = () => {
             path="/result"
             element={
               <Result
-                currentImage={lastGeneratedImage}
+                result={lastGeneratedImage}
                 onSave={handleSaveToGallery}
                 handleConsumption={handleConsumption}
                 user={user}

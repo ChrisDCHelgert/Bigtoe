@@ -7,6 +7,11 @@ export interface ImageAsset {
   isHD: boolean;
   isFavorite: boolean;
   prompt_summary: string;
+  metadata?: {
+    fullPrompt: string;
+    title: string;
+    warnings?: string[];
+  };
 }
 
 export interface UserProfile {
@@ -31,6 +36,11 @@ export interface GeneratorParams {
   scene: string;
   realism: 'anime' | 'photo';
   customPrompt: string;
+  side: 'left' | 'right' | 'both';
+  cameraAngle: 'top' | 'side' | '45' | 'macro';
+  medicalConditions?: string[];
+  freeText?: string;
+  isRandomMode?: boolean;
 }
 
 export interface Notification {

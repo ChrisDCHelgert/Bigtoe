@@ -1,16 +1,23 @@
-
 // screens/Generator.tsx
-// Medical-grade image generator with professional UI
+// Fetish/Creator UX - Refined 3-Column Layout
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Settings, Sparkles, PlayCircle, Eye, Sliders, Wand2, RefreshCw } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Settings, Sparkles, Sliders, Wand2, RefreshCw, Info, Check, Eye } from 'lucide-react';
 import { Button } from '../components/Button';
 import { ImageModal } from '../components/ImageModal';
 import { imageService } from '../services/image/ImageService';
-import { PRESETS, VISUAL_DETAILS, SKIN_TONE_PRESETS } from '../constants';
+import {
+  SKIN_TONE_PRESETS,
+  VISUAL_DETAIL_GROUPS,
+  CAMERA_ANGLES,
+  SCENE_OPTIONS,
+  LIGHTING_CHIPS,
+  FOOT_SIDES,
+  STYLE_PRESETS
+} from '../constants';
 import { UserProfile, GeneratorParams } from '../types';
-import { GeneratorPresetsSelector } from './GeneratorWithPresets';
+import { StylePresetSelector } from '../components/StylePresetSelector';
+import { Select } from '../components/Select';
 
 interface GeneratorProps {
   user: UserProfile;
@@ -19,317 +26,438 @@ interface GeneratorProps {
 }
 
 export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, onGenerate }) => {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [selectedPreset, setSelectedPreset] = useState<keyof typeof PRESETS>('standard');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [resultImage, setResultImage] = useState<string | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [params, setParams] = useState<GeneratorParams>({
+  // Form State
+  const [params, setParams] = useState({
+    quality: 'standard' as 'standard' | 'high' | 'studio',
     gender: 'female',
-    skinTone: 'medium skin tone',
+    side: 'both' as keyof typeof FOOT_SIDES,
     footSize: 38,
-    toeShape: 'greek',
-    perspective: 'close-up',
-    scene: 'Indoor',
-    realism: 'photo',
-    customPrompt: '',
-    side: 'both',
-    cameraAngle: 'macro',
-    visualDetails: [],
-    lighting: '',
+    skinTone: SKIN_TONE_PRESETS[1], // Default Type II
+    angle: CAMERA_ANGLES[1], // Default Side
+    visualDetails: [] as string[],
+    scene: SCENE_OPTIONS[0],
+    lighting: ''
   });
 
-  const getPreset = (key: string) => PRESETS[key as keyof typeof PRESETS] || PRESETS.standard;
+  const previewRef = useRef<HTMLDivElement>(null);
 
-  const handlePreviewPrompt = () => {
-    // Construct simplified prompt for preview
-    const attributes = [
-      params.gender,
-      params.skinTone,
-      params.side !== 'both' ? `${params.side} foot` : 'both feet',
-      params.visualDetails?.join(', '),
-      params.lighting ? `Lighting: ${params.lighting} ` : '',
-      params.customPrompt
-    ].filter(Boolean).join(', ');
+  const handleStylePreset = (preset: typeof STYLE_PRESETS[0]) => {
+    // Find matching objects
+    const matchingAngle = CAMERA_ANGLES.find(a => a.value === preset.params.angle) || CAMERA_ANGLES[1];
 
-    alert(`Active Generation Prompt: \n\n${attributes} \n\nStrictly photorealistic, 8k uhd.`);
+    setParams(prev => ({
+      ...prev,
+      scene: preset.params.scene,
+      lighting: preset.params.lighting,
+      visualDetails: preset.params.visualDetails,
+      angle: matchingAngle
+    }));
+  };
+
+  const toggleDetail = (detail: string) => {
+    setParams(prev => {
+      const current = prev.visualDetails;
+      if (current.includes(detail)) {
+        return { ...prev, visualDetails: current.filter(d => d !== detail) };
+      } else {
+        return { ...prev, visualDetails: [...current, detail] };
+      }
+    });
   };
 
   const handleGenerate = async () => {
-    if (!user.isPremium && user.credits < getPreset(selectedPreset).creditCost) {
-      setErrorMessage("Insufficient credits. Please upgrade to continue.");
+    if (user.credits < 1) {
+      alert("Insufficient credits");
       return;
     }
 
-    setLoading(true);
-    setErrorMessage(null);
+    setIsGenerating(true);
+    setResultImage(null); // Clear previous immediately
+
+    // Scroll to preview on mobile or if needed
+    if (previewRef.current && window.innerWidth < 1024) {
+      previewRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
 
     try {
-      // Build constructed prompt inside component for clarity
-      const constructedPrompt = [
-        `photorealistic ${params.gender} feet`,
-        `skin tone: ${params.skinTone} `,
-        `angle: ${params.cameraAngle} `,
-        `scene: ${params.scene} `,
-        params.visualDetails?.join(', '),
-        params.lighting,
-        params.customPrompt
-      ].filter(Boolean).join(', ');
+      const prompt = `Photorealistic ${params.gender} feet, ${params.side}, ${params.angle.value}, ${params.skinTone.value}. Details: ${params.visualDetails.join(', ')}. Scene: ${params.scene}. Lighting: ${params.lighting || 'balanced'}. 8k resolution, highly detailed skin texture, realistic toes, masterpiece.`;
 
-      // Call image generation service
       const result = await imageService.generateImage({
-        ...params,
-        prompt: constructedPrompt, // Explicitly map prompt for API
-        quality: selectedPreset,
-        userEmail: user.email || 'anonymous@bigtoe.ai',
-        isPremium: user.isPremium,
-      }, user.isPremium);
+        prompt: prompt,
+        aspectRatio: '16:9',
+        enhancePrompt: true
+      }, user.plan === 'Pro' || user.plan === 'Creator');
 
-      setGeneratedImage(result.url); // Fix: valid string URL
-      handleConsumption(getPreset(selectedPreset).creditCost, 'generate');
-      onGenerate(result.url, { params, preset: selectedPreset });
+      // Handle billing
+      handleConsumption(1, 'generate');
+
+      setResultImage(result.imageUrl);
+      onGenerate(result.imageUrl, { ...params, prompt });
 
     } catch (error) {
-      console.error("Generierung fehlgeschlagen", error);
-      setErrorMessage("Generation failed. Please try again or check your settings.");
+      console.error("Generation failed:", error);
+      alert("Generation failed. Please try again.");
     } finally {
-      setLoading(false);
+      setIsGenerating(false);
     }
   };
 
+  const getDetailGroupCount = (groupOptions: string[]) => {
+    return params.visualDetails.filter(d => groupOptions.includes(d)).length;
+  };
+
   return (
-    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 h-[calc(100vh-80px)] overflow-hidden flex flex-col">
-      {/* 3-Column Layout - Takes up remaining height for dashboard feel */}
-      <div className="flex-1 grid lg:grid-cols-10 gap-6 overflow-hidden min-h-0">
+    <div className="min-h-screen bg-brand-bg text-white pb-20">
+      <div className="max-w-[1600px] mx-auto px-4 md:px-6 py-6">
 
-        {/* LEFT COL (30%) - Core Attributes */}
-        <div className="lg:col-span-3 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
-          <div className="bg-brand-card rounded-xl p-5 border border-white/10">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4 flex items-center gap-2">
-              <Settings size={14} /> Basic Settings
-            </h3>
+        {/* Header & Style Presets */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Wand2 className="text-brand-primary" size={24} />
+            Studio Generator
+          </h1>
+          <StylePresetSelector onSelect={handleStylePreset} />
+        </div>
 
-            <div className="space-y-5">
-              <GeneratorPresetsSelector user={user} onChangePreset={setSelectedPreset} />
+        {/* 3-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-400 uppercase">Model Type / Gender</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['Female', 'Male', 'Diverse'].map(g => (
+          {/* COLUMN 1: Basic Settings (3/12) */}
+          <div className="lg:col-span-3 space-y-6">
+            <div className="bg-brand-card p-5 rounded-xl border border-white/5 shadow-lg">
+              <h3 className="text-xs font-bold uppercase text-gray-400 mb-4 flex items-center gap-2">
+                <Settings size={14} /> Basic Appearance
+              </h3>
+
+              {/* Quality */}
+              <div className="mb-6">
+                <label className="text-xs text-gray-500 mb-2 block">Quality Strategy</label>
+                <div className="flex bg-black/20 p-1 rounded-lg">
+                  {['standard', 'high', 'studio'].map((q) => (
                     <button
-                      key={g}
-                      onClick={() => setParams({ ...params, gender: g.toLowerCase() as any })}
-                      className={`py - 2 text - xs rounded - lg border transition - colors font - medium ${params.gender === g.toLowerCase()
-                        ? 'bg-brand-primary border-brand-primary text-white'
-                        : 'bg-brand-bg border-white/10 text-gray-400 hover:border-white/30'
-                        } `}
+                      key={q}
+                      onClick={() => setParams({ ...params, quality: q as any })}
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all ${params.quality === q ? 'bg-brand-primary text-white shadow' : 'text-gray-400 hover:text-gray-200'
+                        }`}
                     >
-                      {g}
+                      {q}
                     </button>
                   ))}
                 </div>
+                <p className="text-[10px] text-brand-primary mt-1 text-right font-mono">Cost: 1 Credit</p>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-400 uppercase flex justify-between">
-                  <span>Foot Size (EU)</span>
-                  <span className="font-mono text-brand-primary font-bold">{params.footSize}</span>
+              {/* Model & Size */}
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="text-xs text-gray-500 mb-2 block">Gender</label>
+                  <div className="flex items-center justify-between bg-black/20 rounded-lg p-2.5 border border-white/5">
+                    <span className="text-sm">Female</span>
+                    <button
+                      onClick={() => setShowAdvanced(!showAdvanced)}
+                      className="text-[10px] text-brand-primary underline"
+                    >
+                      {showAdvanced ? 'Hide Advanced' : 'Change'}
+                    </button>
+                  </div>
+                  {showAdvanced && (
+                    <Select
+                      value={params.gender}
+                      onChange={(e) => setParams({ ...params, gender: e.target.value })}
+                      options={[
+                        { value: 'female', label: 'Female' },
+                        { value: 'male', label: 'Male' }
+                      ]}
+                      className="mt-2"
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-500 mb-2 block flex justify-between">
+                    <span>Reference Size</span>
+                    <span className="text-white">{params.footSize} EU</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="35" max="45" step="0.5"
+                    value={params.footSize}
+                    onChange={(e) => setParams({ ...params, footSize: parseFloat(e.target.value) })}
+                    className="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-brand-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Skin Tone */}
+              <div>
+                <label className="text-xs text-gray-500 mb-3 block flex items-center gap-2">
+                  Skin Tone <Info size={10} />
                 </label>
-                <input
-                  type="range"
-                  min="35"
-                  max="45"
-                  value={params.footSize}
-                  onChange={(e) => setParams({ ...params, footSize: parseInt(e.target.value) })}
-                  className="w-full accent-brand-primary h-2 bg-brand-bg rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-400 uppercase">Skin Tone</label>
                 <div className="grid grid-cols-2 gap-2">
                   {SKIN_TONE_PRESETS.map((tone) => (
                     <button
-                      key={tone.value}
-                      onClick={() => setParams({ ...params, skinTone: tone.value })}
-                      className={`flex items - center gap - 3 p - 2 rounded - lg border transition - all ${params.skinTone === tone.value
-                        ? 'border-brand-primary bg-brand-primary/10'
-                        : 'border-white/10 hover:border-white/30 bg-brand-bg'
-                        } `}
+                      key={tone.name}
+                      onClick={() => setParams({ ...params, skinTone: tone })}
+                      className={`
+                            px-2 py-2 rounded-lg text-xs font-medium border text-left transition-all relative overflow-hidden
+                            ${params.skinTone.name === tone.name
+                          ? 'border-brand-primary bg-brand-primary/10 text-white'
+                          : 'border-white/5 bg-black/20 text-gray-400 hover:bg-white/5'}
+                          `}
                     >
-                      <div className="w-6 h-6 rounded-full border border-white/20 flex-shrink-0" style={{ backgroundColor: tone.hex }} />
-                      <span className="text-xs text-gray-300 truncate">{tone.name}</span>
+                      <span className="relative z-10">{tone.name}</span>
                     </button>
                   ))}
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* MIDDLE COL (30%) - Visual Details & Pose */}
-        <div className="lg:col-span-3 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
-          <div className="bg-brand-card rounded-xl p-5 border border-white/10 h-full">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4 flex items-center gap-2">
-              <Sliders size={14} /> Pose & Details
-            </h3>
+          {/* COLUMN 2: Pose & Details (5/12) */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="bg-brand-card p-5 rounded-xl border border-white/5 shadow-lg">
+              <h3 className="text-xs font-bold uppercase text-gray-400 mb-4 flex items-center gap-2">
+                <Sliders size={14} /> Pose & Characteristics
+              </h3>
 
-            <div className="space-y-5">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-gray-400 uppercase">View</label>
-                  <select
+              {/* View & Angle */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="text-xs text-gray-500 mb-2 block">Side</label>
+                  <Select
                     value={params.side}
                     onChange={(e) => setParams({ ...params, side: e.target.value as any })}
-                    className="w-full bg-brand-bg border border-white/10 rounded-lg p-2.5 text-xs text-white focus:border-brand-primary outline-none"
-                    style={{ backgroundColor: '#0f172a' }}
-                  >
-                    {[
-                      { v: 'left', l: 'Left' }, { v: 'right', l: 'Right' }, { v: 'both', l: 'Both' }
-                    ].map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                  </select>
+                    options={Object.entries(FOOT_SIDES).map(([key, label]) => ({ value: key, label }))}
+                  />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-gray-400 uppercase">Angle</label>
-                  <select
-                    value={params.cameraAngle}
-                    onChange={(e) => setParams({ ...params, cameraAngle: e.target.value as any })}
-                    className="w-full bg-brand-bg border border-white/10 rounded-lg p-2.5 text-xs text-white focus:border-brand-primary outline-none"
-                    style={{ backgroundColor: '#0f172a' }}
-                  >
-                    {[
-                      { v: 'top', l: 'Top Down' }, { v: 'side', l: 'Side Profile' }, { v: '45', l: '45° Angle' }, { v: 'macro', l: 'Close Up (Macro)' }
-                    ].map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                  </select>
+                <div>
+                  <label className="text-xs text-gray-500 mb-2 block">Angle</label>
+                  <Select
+                    value={params.angle.id}
+                    onChange={(e) => {
+                      const angle = CAMERA_ANGLES.find(a => a.id === e.target.value);
+                      if (angle) setParams({ ...params, angle });
+                    }}
+                    options={CAMERA_ANGLES.map((angle) => ({ value: angle.id, label: angle.label }))}
+                  />
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <label className="text-xs font-semibold text-gray-400 uppercase flex items-center gap-2">
-                  <Sparkles size={12} className="text-purple-400" /> Visual Characteristics
-                </label>
-                <div className="grid grid-cols-1 gap-2">
-                  {VISUAL_DETAILS.map(detail => (
+              {/* Quick Angle Presets */}
+              <div className="flex gap-2 mb-8">
+                {['soles', 'macro', 'full'].map(id => {
+                  const angle = CAMERA_ANGLES.find(a => a.id === id);
+                  if (!angle) return null;
+                  return (
                     <button
-                      key={detail}
-                      onClick={() => {
-                        const newDetails = params.visualDetails?.includes(detail)
-                          ? params.visualDetails.filter(c => c !== detail)
-                          : [...(params.visualDetails || []), detail];
-                        setParams({ ...params, visualDetails: newDetails });
-                      }}
-                      className={`px - 3 py - 2 text - xs text - left rounded - lg border transition - colors ${params.visualDetails?.includes(detail)
-                        ? 'border-purple-400 bg-purple-400/10 text-purple-300 font-semibold'
-                        : 'border-white/10 bg-brand-bg text-gray-400 hover:border-white/30'
-                        } `}
+                      key={id}
+                      onClick={() => setParams({ ...params, angle })}
+                      className="px-3 py-1.5 rounded-full text-xs border border-white/10 hover:bg-white/5 text-gray-400 font-medium"
                     >
-                      {detail}
+                      {angle.label}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Grouped Visual Details */}
+              <div className="space-y-6">
+                {/* Shape Group */}
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase mb-3 block border-b border-white/5 pb-2">
+                    {VISUAL_DETAIL_GROUPS.shape.label}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {VISUAL_DETAIL_GROUPS.shape.options.map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => toggleDetail(opt)}
+                        className={`px-3 py-1.5 rounded text-xs transition-colors border ${params.visualDetails.includes(opt)
+                            ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_10px_rgba(168,85,247,0.2)]'
+                            : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20'
+                          }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Texture Group */}
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase mb-3 block border-b border-white/5 pb-2">
+                    {VISUAL_DETAIL_GROUPS.texture.label}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {VISUAL_DETAIL_GROUPS.texture.options.map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => toggleDetail(opt)}
+                        className={`px-3 py-1.5 rounded text-xs transition-colors border ${params.visualDetails.includes(opt)
+                            ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_10px_rgba(168,85,247,0.2)]'
+                            : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20'
+                          }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Style Group */}
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase mb-3 block border-b border-white/5 pb-2">
+                    {VISUAL_DETAIL_GROUPS.style.label}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {VISUAL_DETAIL_GROUPS.style.options.map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => toggleDetail(opt)}
+                        className={`px-3 py-1.5 rounded text-xs transition-colors border ${params.visualDetails.includes(opt)
+                            ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_10px_rgba(168,85,247,0.2)]'
+                            : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20'
+                          }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* COLUMN 3: Scene & Preview (4/12) */}
+          <div className="lg:col-span-4 space-y-6">
+
+            {/* Scene Settings */}
+            <div className="bg-brand-card p-5 rounded-xl border border-white/5 shadow-lg">
+              <h3 className="text-xs font-bold uppercase text-gray-400 mb-4 flex items-center gap-2">
+                <Sparkles size={14} /> Scene & Lighting
+              </h3>
+
+              <div className="mb-4">
+                <label className="text-xs text-gray-500 mb-2 block">Environment</label>
+                <Select
+                  value={params.scene}
+                  onChange={(e) => setParams({ ...params, scene: e.target.value })}
+                  options={SCENE_OPTIONS.map(s => ({ value: s, label: s }))}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500 mb-2 block">Lighting</label>
+                <input
+                  type="text"
+                  value={params.lighting}
+                  onChange={(e) => setParams({ ...params, lighting: e.target.value })}
+                  placeholder="e.g. Cinematic, Sunset..."
+                  className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-xs text-white mb-2 outline-none focus:border-brand-primary"
+                />
+                <div className="flex flex-wrap gap-1.5">
+                  {LIGHTING_CHIPS.map(chip => (
+                    <button
+                      key={chip}
+                      onClick={() => setParams({ ...params, lighting: chip })}
+                      className="text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-400 border border-white/5"
+                    >
+                      {chip}
                     </button>
                   ))}
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* RIGHT COL (40%) - Visuals & Result (Fixed Focus) */}
-        <div className="lg:col-span-4 flex flex-col gap-4 h-full">
-          {/* Scene Config & Action */}
-          <div className="bg-brand-card rounded-xl p-5 border border-white/10 flex-shrink-0">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-400 uppercase">Scene / Background</label>
-                <select
-                  value={params.scene}
-                  onChange={(e) => setParams({ ...params, scene: e.target.value })}
-                  className="w-full bg-brand-bg border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none"
-                  style={{ backgroundColor: '#0f172a' }}
-                >
-                  {['Indoor', 'Outdoor', 'Beach', 'Studio', 'Bed', 'Carpet', 'Poolside'].map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-400 uppercase">Lighting</label>
-                <input
-                  type="text"
-                  value={params.lighting || ''}
-                  onChange={(e) => setParams({ ...params, lighting: e.target.value })}
-                  placeholder="e.g. Cinematic, Sunset, Softbox"
-                  className="w-full bg-brand-bg border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none"
-                  style={{ backgroundColor: '#0f172a' }}
-                />
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <textarea
-                rows={2}
-                className="w-full bg-brand-bg border border-white/10 rounded-lg p-3 text-xs text-white placeholder-gray-500 focus:border-brand-primary outline-none resize-none"
-                style={{ backgroundColor: '#0f172a' }}
-                placeholder="Additional Prompt Details (e.g. no socks, silver anklet)... "
-                value={params.customPrompt || ''}
-                onChange={(e) => setParams({ ...params, customPrompt: e.target.value })}
-              />
-            </div>
-
-            <Button
-              variant="primary"
-              fullWidth
-              onClick={handleGenerate}
-              isLoading={loading}
-              disabled={loading}
-              className="py-3 shadow-lg shadow-purple-900/30"
+            {/* PREVIEW AREA (Sticky) */}
+            <div
+              ref={previewRef}
+              className="bg-brand-card rounded-xl border border-white/5 shadow-2xl overflow-hidden sticky top-6"
             >
-              <div className="flex items-center justify-center gap-2">
-                <PlayCircle size={18} />
-                <span>{loading ? 'Generating...' : 'Generate Image'}</span>
-              </div>
-            </Button>
-            {errorMessage && <p className="text-xs text-red-400 mt-2 text-center">{errorMessage}</p>}
-          </div>
+              <div className="p-1 bg-gradient-to-r from-brand-primary via-purple-500 to-pink-500 opacity-20 h-1"></div>
 
-          {/* Result Area - Always Visible */}
-          <div className="flex-1 bg-black/40 rounded-xl border border-white/10 flex flex-col items-center justify-center relative overflow-hidden group min-h-[300px]">
-            {generatedImage ? (
-              <>
-                <img
-                  src={generatedImage}
-                  alt="Result"
-                  className="w-full h-full object-contain cursor-pointer"
-                  onClick={() => setShowImageModal(true)}
-                />
-                <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleGenerate()} className="p-2 bg-black/60 rounded-full text-white hover:bg-black">
-                    <RefreshCw size={16} />
-                  </button>
-                  <button onClick={() => setShowImageModal(true)} className="p-2 bg-black/60 rounded-full text-white hover:bg-black">
-                    <Eye size={16} />
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="text-center text-gray-500">
-                <div className="w-16 h-16 rounded-full bg-white/5 mx-auto mb-4 flex items-center justify-center">
-                  <Wand2 size={24} className="opacity-50" />
-                </div>
-                <p className="text-sm">Preview Area</p>
-                <p className="text-xs opacity-50 mt-1">Generated images appear here</p>
+              {/* Result Display */}
+              <div className="aspect-[16/9] bg-black/40 relative flex items-center justify-center group">
+                {isGenerating ? (
+                  <div className="text-center">
+                    <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-sm text-brand-primary font-bold animate-pulse">Rendering masterpiece...</p>
+                    <p className="text-xs text-gray-500 mt-2">Putting pixels in place</p>
+                  </div>
+                ) : resultImage ? (
+                  <>
+                    <img
+                      src={resultImage}
+                      alt="Generated Result"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                      <Button
+                        onClick={() => setIsModalOpen(true)}
+                        variant="primary"
+                        size="sm"
+                      >
+                        <Eye size={16} className="mr-2" /> View Full
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center p-8">
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-primary/50">
+                      <Sparkles size={32} />
+                    </div>
+                    <h3 className="text-white font-bold mb-1">Ready to Create</h3>
+                    <p className="text-gray-500 text-xs max-w-[200px] mx-auto">
+                      Configure your settings on the left, then click Generate.
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Main Action */}
+              <div className="p-4 border-t border-white/5 bg-brand-card">
+                <Button
+                  fullWidth
+                  size="lg"
+                  variant="primary"
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  className="shadow-xl shadow-purple-900/40 relative overflow-hidden"
+                >
+                  {isGenerating ? 'Processing...' : `Generate Image (1 Credit)`}
+                  {!isGenerating && <Wand2 size={18} className="ml-2" />}
+                </Button>
+              </div>
+            </div>
+
           </div>
         </div>
-
       </div>
 
-      {showImageModal && generatedImage && (
-        <ImageModal
-          imageUrl={generatedImage}
-          onClose={() => setShowImageModal(false)}
-          title="Generated Image"
-        />
-      )}
+      {/* Disclaimer & Legal Footer */}
+      <div className="mt-12 text-center border-t border-white/5 pt-8 pb-12">
+        <p className="text-gray-500 text-xs flex items-center justify-center gap-2 mb-4">
+          <Info size={12} />
+          This platform generates synthetic/fictional images. No real persons are depicted.
+        </p>
+        <div className="flex justify-center gap-6 text-[10px] text-gray-600 uppercase tracking-widest">
+          <a href="/impressum" className="hover:text-brand-primary">Impressum</a>
+          <a href="/privacy" className="hover:text-brand-primary">Datenschutzerklärung</a>
+          <a href="/agb" className="hover:text-brand-primary">AGB</a>
+          <button className="hover:text-brand-primary">Cookie Settings</button>
+        </div>
+      </div>
+
+      <ImageModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        imageUrl={resultImage || ''}
+      />
     </div>
   );
 };

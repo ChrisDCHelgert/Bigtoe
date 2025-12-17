@@ -19,15 +19,23 @@ import { UserProfile } from './types';
 
 const App: React.FC = () => {
   // Global State (Mocked)
-  const [user, setUser] = useState<UserProfile>({
-    name: 'Anonymous User',
-    credits: 125,
-    isPremium: false,
-    plan: 'Free',
-    freeTrialUsed: 0,
-    freeTrialTotal: 3,
-    settings: { language: 'de', trackingEnabled: true }
+  const [user, setUser] = useState<UserProfile>(() => {
+    const saved = localStorage.getItem('bigtoe_user');
+    return saved ? JSON.parse(saved) : {
+      name: 'Anonymous User',
+      credits: 125,
+      isPremium: false,
+      plan: 'Free',
+      freeTrialUsed: 0,
+      freeTrialTotal: 3,
+      settings: { language: 'de', trackingEnabled: true }
+    };
   });
+
+  // Persist user state whenever it changes
+  React.useEffect(() => {
+    localStorage.setItem('bigtoe_user', JSON.stringify(user));
+  }, [user]);
 
   const [lastGeneratedImage, setLastGeneratedImage] = useState<{ url: string; metadata: any } | null>(null);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);

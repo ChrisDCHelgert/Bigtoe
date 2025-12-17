@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Wand2, Lock, Eye, PlayCircle, Layers, Sparkles } from 'lucide-react';
 import { Button } from '../components/Button';
 import { UserProfile } from '../types';
+import { TRANSLATIONS, Language } from '../i18n/translations';
 
 interface HomeProps {
   user: UserProfile;
@@ -11,6 +12,9 @@ interface HomeProps {
 
 export const Home: React.FC<HomeProps> = ({ user }) => {
   const navigate = useNavigate();
+  // Fallback to 'de' if setting is missing, though App.tsx defaults it.
+  const currentLang = (user.settings?.language || 'de') as Language;
+  const t = TRANSLATIONS[currentLang]?.home || TRANSLATIONS['de'].home;
 
   return (
     <div className="min-h-[calc(100vh-80px)] flex flex-col justify-center">
@@ -21,20 +25,18 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
         {/* Privacy Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-xs font-semibold uppercase tracking-wider mb-8">
           <Lock size={12} />
-          <span>Anonymous & Privacy-First</span>
+          <span>{t.privacyBadge}</span>
         </div>
 
         {/* Headline */}
         <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight tracking-tight">
-          Create Hyper-Realistic <br />
-          <span className="text-gray-400">Custom Foot Imagery</span>
+          {t.headline.split(', ')[0]} <br />
+          <span className="text-gray-400">{t.headline.split(', ').slice(1).join(', ')}</span>
         </h1>
 
         {/* Subline */}
         <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-          The ultimate AI tool for creators, artists, and enthusiasts.
-          Generate unique, photorealistic fictional content in seconds.
-          Full control over details, angles, and lighting.
+          {t.subheadline}
         </p>
 
         {/* CTA Buttons */}
@@ -47,7 +49,7 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
           >
             <div className="flex items-center gap-2">
               <PlayCircle size={20} />
-              <span>Generate Now</span>
+              <span>{t.ctaPrimary}</span>
             </div>
           </Button>
 
@@ -57,7 +59,7 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
             className="w-full sm:w-auto px-10 py-4 text-lg border-white/10 hover:bg-white/5"
             onClick={() => navigate('/gallery')}
           >
-            View Gallery
+            {t.ctaSecondary}
           </Button>
         </div>
 
@@ -68,9 +70,9 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
               <Layers size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-white text-sm mb-1">Full Control</h3>
+              <h3 className="font-bold text-white text-sm mb-1">{t.features.control.title}</h3>
               <p className="text-xs text-gray-400 leading-relaxed">
-                Customize soles, arches, toes, poses, and lighting to your exact specifications.
+                {t.features.control.desc}
               </p>
             </div>
           </div>
@@ -80,9 +82,9 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
               <Sparkles size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-white text-sm mb-1">Ultra Realistic</h3>
+              <h3 className="font-bold text-white text-sm mb-1">{t.features.realistic.title}</h3>
               <p className="text-xs text-gray-400 leading-relaxed">
-                State-of-the-art AI generation that rivals studio photography. 4K quality available.
+                {t.features.realistic.desc}
               </p>
             </div>
           </div>
@@ -92,9 +94,9 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
               <Eye size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-white text-sm mb-1">100% Private</h3>
+              <h3 className="font-bold text-white text-sm mb-1">{t.features.private.title}</h3>
               <p className="text-xs text-gray-400 leading-relaxed">
-                Generations are private to you. No real persons depicted. Fictional content only.
+                {t.features.private.desc}
               </p>
             </div>
           </div>

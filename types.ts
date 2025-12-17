@@ -28,20 +28,18 @@ export interface UserProfile {
 }
 
 export interface GeneratorParams {
-  gender: 'female' | 'male' | 'diverse';
-  skinTone: string;
+  quality?: 'standard' | 'high' | 'studio';
+  gender: string;
+  skinTone: { name: string; value: string; hex: string } | string;
   footSize: number;
-  toeShape: string;
-  perspective: string;
-  scene: string;
-  realism: 'anime' | 'photo';
-  customPrompt: string;
   side: 'left' | 'right' | 'both';
-  cameraAngle: 'top' | 'side' | '45' | 'macro';
-  visualDetails?: string[];
+  angle: { id: string; label: string; value: string } | string;
+  visualDetails: string[];
+  scene: string;
   lighting?: string;
-  freeText?: string;
-  isRandomMode?: boolean;
+  prompt?: string;
+  aspectRatio?: string;
+  enhancePrompt?: boolean;
 }
 
 export interface Notification {

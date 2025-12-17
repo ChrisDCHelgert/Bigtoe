@@ -5,19 +5,29 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, History, Settings, Globe, Shield, Trash2, CreditCard, TrendingUp } from 'lucide-react';
 import { Button } from '../components/Button';
+import { Select } from '../components/Select';
 import { UserProfile } from '../types';
 
 interface CreditsProps {
     user: UserProfile;
+    onUpdateSettings?: (settings: any) => void;
+    onDeleteAccount?: () => void;
 }
 
-export const Credits: React.FC<CreditsProps> = ({ user }) => {
+export const Credits: React.FC<CreditsProps> = ({ user, onUpdateSettings, onDeleteAccount }) => {
     const navigate = useNavigate();
-    const [language, setLanguage] = useState('de');
+    const [language, setLanguage] = useState(user.settings?.language || 'de');
     const [trackingConsent, setTrackingConsent] = useState(true);
 
     const handleBuyCredits = (amount: number) => {
         navigate('/premium');
+    };
+
+    const handleLanguageChange = (lang: string) => {
+        setLanguage(lang);
+        if (onUpdateSettings) {
+            onUpdateSettings({ language: lang as 'de' | 'en' });
+        }
     };
 
     const handleDeleteAccount = () => {
@@ -196,15 +206,14 @@ export const Credits: React.FC<CreditsProps> = ({ user }) => {
                             <label className="text-xs font-semibold text-gray-400 uppercase mb-2 block flex items-center gap-1">
                                 <Globe size={12} /> Sprache
                             </label>
-                            <select
+                            <Select
                                 value={language}
-                                onChange={(e) => setLanguage(e.target.value)}
-                                className="w-full bg-brand-bg border border-white/10 rounded-lg p-3 text-sm text-white focus:border-brand-primary outline-none"
-                            >
-                                <option value="de">Deutsch</option>
-                                <option value="en">English</option>
-                                <option value="fr">Français</option>
-                            </select>
+                                onChange={(e) => handleLanguageChange(e.target.value)}
+                                options={[
+                                    { value: 'de', label: 'Deutsch' },
+                                    { value: 'en', label: 'English' }
+                                ]}
+                            />
                         </div>
 
                         {/* DSGVO / Tracking */}

@@ -38,50 +38,116 @@ export const CREDIT_PACKS = [
   { id: 'pro', name: 'Pro', credits: 1500, price: '49,99€' },
 ];
 
+// Skin Tones (Fitzpatrick Scale - Neutral & Professional)
 export const SKIN_TONE_PRESETS = [
-  { name: 'Pale / Light', value: 'very light skin tone', hex: '#FAD7C0' },
-  { name: 'Fair / Beige', value: 'light skin tone', hex: '#EAC0A5' },
-  { name: 'Medium / Olive', value: 'medium skin tone', hex: '#D2A180' },
-  { name: 'Tan / Bronze', value: 'tan skin tone', hex: '#B88260' },
-  { name: 'Deep / Brown', value: 'dark skin tone', hex: '#8D5B3E' },
-  { name: 'Ebony / Dark', value: 'very dark skin tone', hex: '#583626' },
+  { name: 'Type I', value: 'very light skin tone, pale', hex: '#FAD7C0' },
+  { name: 'Type II', value: 'light skin tone, fair', hex: '#EAC0A5' },
+  { name: 'Type III', value: 'medium skin tone, olive', hex: '#D2A180' },
+  { name: 'Type IV', value: 'tan skin tone, bronze', hex: '#B88260' },
+  { name: 'Type V', value: 'dark skin tone, brown', hex: '#8D5B3E' },
+  { name: 'Type VI', value: 'very dark skin tone, ebony', hex: '#583626' },
 ];
 
+// Grouped Visual Details for structured selection
+export const VISUAL_DETAIL_GROUPS = {
+  shape: {
+    label: 'Toe & Shape',
+    options: ['Long Toes', 'Short Toes', 'Toe Spacing', 'High Arch', 'Flat Sole']
+  },
+  texture: {
+    label: 'Skin & Texture',
+    options: ['Smooth', 'Wrinkled Soles', 'Veiny', 'Natural Look']
+  },
+  style: {
+    label: 'Style & Accessories',
+    options: ['Painted Nails', 'French Tips', 'Jewelry/Anklet', 'Tattooed', 'Wet/Oiled']
+  }
+};
+
+// Flattened list for backward compatibility if needed, but prefer groups
 export const VISUAL_DETAILS = [
-  'High Arch',
-  'Flat Sole',
-  'Long Toes',
-  'Short Toes',
-  'Painted Nails',
-  'Natural Look',
-  'Smooth Texture',
-  'Wrinkled Soles',
-  'Veiny',
-  'Tattooed',
-  'Jewelry/Anklet',
+  ...VISUAL_DETAIL_GROUPS.shape.options,
+  ...VISUAL_DETAIL_GROUPS.texture.options,
+  ...VISUAL_DETAIL_GROUPS.style.options
+];
+
+// Top-Level Style Presets (Quick Start)
+export const STYLE_PRESETS = [
+  {
+    id: 'clean_studio',
+    label: 'Clean Studio',
+    params: {
+      scene: 'Studio White',
+      lighting: 'Softbox Studio',
+      visualDetails: ['Smooth', 'Natural Look', 'Pedicured'],
+      angle: 'side profile'
+    }
+  },
+  {
+    id: 'wrinkled_soles',
+    label: 'Wrinkled Soles',
+    params: {
+      scene: 'Minimal Dark',
+      lighting: 'Cinematic Low Light',
+      visualDetails: ['Wrinkled Soles', 'High Arch', 'Veiny'],
+      angle: 'soles focus'
+    }
+  },
+  {
+    id: 'macro_toes',
+    label: 'Macro Toes',
+    params: {
+      scene: 'Soft Blurred',
+      lighting: 'Natural Window Light',
+      visualDetails: ['Long Toes', 'Painted Nails', 'Smooth'],
+      angle: 'close-up macro'
+    }
+  },
+  {
+    id: 'natural_bedroom',
+    label: 'Natural Bedroom',
+    params: {
+      scene: 'Bedroom',
+      lighting: 'Morning Sun',
+      visualDetails: ['Natural Look', 'Short Toes'],
+      angle: 'top-down view'
+    }
+  }
 ];
 
 export const FORBIDDEN_WORDS = [
-  'blood', 'wound', 'gore', 'child', 'minor', 'kid', 'underage', 'dead', 'corpse', 'mutilated'
+  'blood', 'wound', 'gore', 'child', 'minor', 'kid', 'underage', 'dead', 'corpse', 'mutilated',
+  'rape', 'assault', 'non-consensual', 'abuse'
 ];
 
-export const CAMERA_ANGLES: Record<string, string> = {
-  'top': 'top-down view',
-  'side': 'side profile',
-  '45': 'angled from 45-degree front view',
-  'macro': 'close-up macro shot, focus on toes and skin texture'
-};
+export const CAMERA_ANGLES = [
+  { id: 'top', label: 'Top Down', value: 'top-down view' },
+  { id: 'side', label: 'Side Profile', value: 'side profile' },
+  { id: 'soles', label: 'Soles Focus', value: 'bottom view showing soles' },
+  { id: 'macro', label: 'Macro Close-Up', value: 'close-up macro shot' },
+  { id: 'full', label: 'Full Foot', value: 'full foot view' }
+];
+
+export const SCENE_OPTIONS = [
+  'Studio White',
+  'Studio Dark',
+  'Bedroom',
+  'Minimal / Black',
+  'Outdoor Concrete',
+  'Outdoor Sand',
+  'Outdoor Grass'
+];
+
+export const LIGHTING_CHIPS = [
+  'Softbox Studio',
+  'Natural Window Light',
+  'Cinematic Low Light',
+  'Golden Hour',
+  'Flash Photography'
+];
 
 export const FOOT_SIDES: Record<string, string> = {
   'left': 'left foot',
   'right': 'right foot',
   'both': 'both feet'
-};
-
-export const MEDICAL_TRANSLATIONS: Record<string, string> = {
-  'Plattfuß (Flat Foot)': 'flat foot condition',
-  'Spreizfuß (Splay Foot)': 'splay foot condition',
-  'Hallux Valgus': 'hallux valgus bunion',
-  'Hammerzehe': 'hammer toe',
-  'Hoher Spann (High Arch)': 'high arch structure'
 };

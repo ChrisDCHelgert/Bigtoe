@@ -5,8 +5,10 @@ BigToe is a privacy-first AI generation tool designed for creators, artists, and
 ## 🚀 Key Features
 
 *   **Creator-Centric Workflow:** Customize every detail (arches, soles, lighting, angles) with a UI designed for artists.
+*   **🇩🇪 German First:** Fully localized interface with German as the default language (English fallback available).
 *   **Privacy First:** 100% anonymous generation. No data sharing.
 *   **High-Fidelity AI:** Powered by advanced diffusion models tailored for realistic skin textures and lighting.
+*   **Refined UI:** Dark-mode optimized with enhanced accessibility and usable dropdowns.
 *   **Compliance & Safety:** Strict guardrails against non-consensual or illegal content.
 *   **PWA Ready:** Installable on Desktop and Mobile.
 

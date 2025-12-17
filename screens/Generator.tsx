@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Wand2, Zap, HelpCircle, Save, Sliders, PlayCircle, Shuffle, Eye, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '../components/Button';
-import { enhancePrompt, generateImage } from '../services/geminiService';
+import { enhancePrompt } from '../services/geminiService';
+import { imageService } from '../services/image/ImageService';
+import { QUALITY_PRESETS, QualityPresetId, getPreset } from '../services/image/presets';
 import { PRESETS, MEDICAL_CONDITIONS, FORBIDDEN_WORDS, CAMERA_ANGLES, FOOT_SIDES, MEDICAL_TRANSLATIONS } from '../constants';
 import { UserProfile, GeneratorParams } from '../types';
+import { GeneratorPresetsSelector } from './GeneratorWithPresets';
 
 interface GeneratorProps {
   user: UserProfile;
@@ -18,6 +21,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
   const [prompt, setPrompt] = useState('');
   const [enhancing, setEnhancing] = useState(false);
   const [freeText, setFreeText] = useState('');
+  const [selectedPreset, setSelectedPreset] = useState<QualityPresetId>('standard');
 
   // Form State
   const [params, setParams] = useState<GeneratorParams>({
@@ -143,8 +147,10 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
   };
 
   const handleGenerate = async () => {
-    // Check limits
-    if (!user.isPremium && user.freeTrialUsed >= user.freeTrialTotal && user.credits < 5) {
+    const preset = getPreset(selectedPreset);
+
+    // Check credits (now based on preset cost)
+    if (!user.isPremium && user.freeTrialUsed >= user.freeTrialTotal && user.credits < preset.creditCost) {
       navigate('/premium');
       return;
     }
@@ -152,22 +158,39 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
     if (!validatePrompt(prompt) || !validatePrompt(freeText)) return;
 
     setLoading(true);
-    handleConsumption(5, 'generate');
+    handleConsumption(preset.creditCost, 'generate');
 
     // Construct full prompt
     const fullPrompt = buildDetailedPrompt();
 
-    const url = await generateImage(fullPrompt);
+    try {
+      // Use ImageService instead of direct geminiService
+      const result = await imageService.generate(
+        {
+          prompt: fullPrompt,
+          width: preset.width,
+          height: preset.height,
+          params: params
+        },
+        user.isPremium
+      );
 
-    // Create metadata
-    const metadata = {
-      fullPrompt,
-      title: params.isRandomMode ? "Zufallskreation" : "Benutzerdefinierte Generierung"
-    };
+      // Create metadata
+      const metadata = {
+        fullPrompt,
+        title: params.isRandomMode ? "Zufallskreation" : "Benutzerdefinierte Generierung",
+        provider: result.provider,
+        preset: selectedPreset
+      };
 
-    onGenerate(url, metadata);
-    setLoading(false);
-    navigate('/result');
+      onGenerate(result.url, metadata);
+      setLoading(false);
+      navigate('/result');
+    } catch (error: any) {
+      console.error('Generation failed:', error);
+      alert(`Generation failed: ${error.message}`);
+      setLoading(false);
+    }
   };
 
   return (
@@ -210,21 +233,11 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
           </button>
         </div>
 
-        {/* Realism Toggle */}
-        <div className="grid grid-cols-2 gap-2 bg-brand-card p-1 rounded-xl">
-          {['Anime (Low)', 'Photo (High)'].map(mode => (
-            <button
-              key={mode}
-              onClick={() => setParams({ ...params, realism: mode.split(' ')[0].toLowerCase() as any })}
-              className={`py-2 rounded-lg text-sm font-medium transition-all ${params.realism === mode.split(' ')[0].toLowerCase()
-                ? 'bg-brand-primary text-white shadow-lg'
-                : 'text-gray-400 hover:text-white'
-                }`}
-            >
-              {mode.includes('Photo') ? <span className="flex justify-center items-center gap-1">📷 {mode}</span> : <span className="flex justify-center items-center gap-1">🖌️ {mode}</span>}
-            </button>
-          ))}
-        </div>
+        {/* Quality Preset Selector */}
+        <GeneratorPresetsSelector
+          user={user}
+          onChangePreset={setSelectedPreset}
+        />
 
         {/* Gender */}
         <div className="space-y-2">
@@ -397,11 +410,11 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 Generate
               </span>
               <span className="text-xs font-normal opacity-80 bg-black/20 px-2 py-1 rounded">
-                {user.isPremium ? 'Unlimited' : (user.freeTrialUsed < user.freeTrialTotal ? 'Free Trial' : '5 Credits')}
+                {user.isPremium ? 'Unlimited' : (user.freeTrialUsed < user.freeTrialTotal ? 'Free Trial' : `${getPreset(selectedPreset).creditCost} Credits`)}
               </span>
             </div>
           </Button>
-          {(!user.isPremium && user.freeTrialUsed >= user.freeTrialTotal && user.credits < 5) && (
+          {(!user.isPremium && user.freeTrialUsed >= user.freeTrialTotal && user.credits < getPreset(selectedPreset).creditCost) && (
             <p className="text-center text-xs text-red-400 mt-2">
               Nicht genügend Credits. <button onClick={() => navigate('/premium')} className="underline">Aufladen</button>
             </p>

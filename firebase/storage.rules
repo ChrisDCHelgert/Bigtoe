@@ -1,0 +1,27 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Originals: STRICT PRIVATE
+    match /originals/{userId}/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if false; // Only Backend writes generated files
+    }
+
+    // Thumbnails: STRICT PRIVATE
+    match /thumbnails/{userId}/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if false; // Only Backend writes
+    }
+    
+    // Default Deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

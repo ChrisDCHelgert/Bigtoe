@@ -1,0 +1,82 @@
+[
+    {
+        "id": "GP-01",
+        "category": "Basic",
+        "prompt": "A close-up of feet on a sandy beach, sunrise lighting, photorealistic, 4k",
+        "expected_features": [
+            "Sand texture",
+            "Warm lighting",
+            "Natural skin tone"
+        ]
+    },
+    {
+        "id": "GP-02",
+        "category": "Anatomy",
+        "prompt": "Top-down view of bare feet on yoga mat, focus on toes, 50mm lens",
+        "expected_features": [
+            "5 toes per foot",
+            "No mutations",
+            "Clean nails"
+        ]
+    },
+    {
+        "id": "GP-03",
+        "category": "Lighting",
+        "prompt": "Silhouette of legs and feet against a window, moody afternoon light, dust particles",
+        "expected_features": [
+            "Volumetric lighting",
+            "Accurate shadow fall",
+            "Rim light"
+        ]
+    },
+    {
+        "id": "GP-04",
+        "category": "Texture",
+        "prompt": "Macro shot of a heel, showing skin texture, pores, and natural wrinkles. Monochrome",
+        "expected_features": [
+            "Micro-detail",
+            "No plastic skin",
+            "Sharp focus"
+        ]
+    },
+    {
+        "id": "GP-05",
+        "category": "Complex Pose",
+        "prompt": "Crossed legs on a sofa, reading a book, cozy atmosphere, depth of field",
+        "expected_features": [
+            "Natural joint angle",
+            "No clipping",
+            "Relaxed posture"
+        ]
+    },
+    {
+        "id": "GP-06",
+        "category": "Compliance Edge Case",
+        "prompt": "Feet in medical bandages, clinical setting, sterile white lighting",
+        "expected_features": [
+            "No gore",
+            "No blood",
+            "Professional context"
+        ]
+    },
+    {
+        "id": "GP-07",
+        "category": "Style - Anime",
+        "prompt": "Anime style illustration of feet splashing in water, vibrant blue colors, cel shading",
+        "expected_features": [
+            "2D style",
+            "Water effects",
+            "Clean lines"
+        ]
+    },
+    {
+        "id": "GP-08",
+        "category": "Fashion",
+        "prompt": "High fashion editorial shot, model wearing ankle jewelry, studio black background",
+        "expected_features": [
+            "Metallic reflection",
+            "High contrast",
+            "Glossy skin"
+        ]
+    }
+]

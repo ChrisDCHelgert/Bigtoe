@@ -1,0 +1,158 @@
+{
+    "version": "1.0",
+    "scope": [
+        "Product",
+        "AI-Generation",
+        "UI/UX",
+        "Marketing",
+        "Operations"
+    ],
+    "product_positioning": {
+        "definition": "AI-supported generator for photorealistic foot images",
+        "purpose": [
+            "aesthetic",
+            "artistic",
+            "design-related"
+        ],
+        "exclusions": [
+            "Erotic",
+            "Pornography",
+            "Fetish"
+        ]
+    },
+    "age_restriction": {
+        "minimum_age": 18,
+        "requirements": [
+            "Mandatory 18+ self-declaration on first access",
+            "Consent logging",
+            "Clear notices in TOS & Privacy Policy"
+        ]
+    },
+    "allowed_content": {
+        "subject": "Photorealistic representation of feet",
+        "style": "Neutral to aesthetic",
+        "allowed_parameters": {
+            "camera_angle": [
+                "top",
+                "side",
+                "frontal",
+                "detail"
+            ],
+            "perspective": [
+                "one foot",
+                "both feet"
+            ],
+            "attributes": [
+                "Skin tone",
+                "Skin texture",
+                "Grooming state"
+            ],
+            "environment": [
+                "neutral",
+                "everyday",
+                "studio",
+                "beach",
+                "interior"
+            ],
+            "clothing": "Shoes/Socks without sexual connotation"
+        },
+        "exclusions": [
+            "Arousal",
+            "Fetish",
+            "Sexual act",
+            "Sexual intention"
+        ]
+    },
+    "hard_block_content": {
+        "description": "Explicitly prohibited and technically blocked",
+        "prohibited_contexts": [
+            "Sexual or fetishistic context"
+        ],
+        "prohibited_keywords": [
+            "fetish",
+            "arousing",
+            "sexual",
+            "horny",
+            "domination",
+            "submission",
+            "fluids"
+        ],
+        "minor_safety": {
+            "prohibited_concepts": [
+                "Minors",
+                "Age-related insinuations"
+            ],
+            "prohibited_keywords": [
+                "young",
+                "teen",
+                "school",
+                "child"
+            ]
+        },
+        "other_prohibited": [
+            "Sexual acts (implicit or explicit)",
+            "Body fluids or arousal-related depictions",
+            "Violence, coercion, degradation",
+            "Reference to real, identifiable persons",
+            "Illegal or socially ostracized content"
+        ]
+    },
+    "moderation": {
+        "preventive": [
+            "Prompt Filter (Keyword blocklists + semantic heuristics)",
+            "UI with neutral, predefined options only"
+        ],
+        "reactive": [
+            "User reporting function",
+            "Manual review & immediate takedown on violation"
+        ],
+        "consequence": "Rejection of generation instead of 'borderline output'"
+    },
+    "ui_ux_guardrails": {
+        "prohibited": [
+            "Sexualized terms",
+            "Sexualized sliders",
+            "Sexualized presets",
+            "Community features",
+            "Social features"
+        ],
+        "focus": [
+            "Technology",
+            "Image quality",
+            "Camera & Aesthetics"
+        ],
+        "architecture": "Clear separation between User Input and System Prompt"
+    },
+    "distribution": {
+        " platforms": [
+            "Web-App / PWA only"
+        ],
+        "prohibited_platforms": [
+            "Google Play Store",
+            "Apple App Store"
+        ],
+        "metadata_constraints": "No store keywords or texts with sexual meaning"
+    },
+    "marketing": {
+        "language": "Neutral (e.g., 'AI Foot Image Generator')",
+        "prohibited_framing": [
+            "Fetish",
+            "Erotic",
+            "Adult"
+        ],
+        "placement_restrictions": "No placement on porn or fetish platforms",
+        "seo_constraints": "Strict adherence to compliance document"
+    },
+    "payment": {
+        "provider_type": "Adult experience or neutral risk profile",
+        "requirements": [
+            "Discrete billing",
+            "Clear separation between Content Policy and Billing"
+        ]
+    },
+    "enforcement": {
+        "status": "Binding",
+        "violation_policy": "Deviations are policy violations",
+        "change_management": "Changes strictly require compliance review"
+    }
+}

@@ -1,0 +1,43 @@
+/
+├── src/
+│   ├── modules/                 # BOUNDED CONTEXTS (The 8 functional cores)
+│   │   ├── age-gate/            # Age & Consent Enforcment
+│   │   │   ├── components/      # UI Overlay
+│   │   │   ├── logic/           # Storage, Validation
+│   │   │   └── types.ts
+│   │   ├── auth/                # Identity Management
+│   │   ├── guard/               # Prompt & Input Validation
+│   │   │   ├── blocklists/      # Static JSON lists
+│   │   │   └── semantic/        # Logic
+│   │   ├── generation/          # Image Engine Orchestration
+│   │   │   ├── adapters/        # API Clients (Gemini/Pollinations)
+│   │   │   └── jobs/            # Job Queue Logic
+│   │   ├── library/             # Private Asset Management
+│   │   ├── monetization/        # Billing & Credits
+│   │   ├── logging/             # Compliance Audit Log
+│   │   └── config/              # Remote Config / Keys
+│   │
+│   ├── shared/                  # CROSS-CUTTING CONCERNS
+│   │   ├── ui/                  # Dumb UI Kits (Buttons, Inputs)
+│   │   ├── utils/               # Helpers
+│   │   └── types/               # Global Domain Types
+│   │
+│   ├── app/                     # APP SHELL
+│   │   ├── routes/
+│   │   └── App.tsx
+│   │
+│   └── main.tsx
+│
+├── compliance/                  # LEGAL & POLICY DOCUMENTATION
+│   ├── policy.md
+│   ├── policy.json
+│   └── enforcement-map.md
+│
+├── docs/                        # TECHNICAL DOCUMENTATION
+│   └── architecture/
+│       ├── architecture.md
+│       └── module-map.md
+│
+└── tests/                       # E2E & COMPLIANCE TESTS
+    ├── guard/
+    └── age-gate/

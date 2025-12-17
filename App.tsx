@@ -17,6 +17,7 @@ import { CookieProvider } from './contexts/CookieContext';
 import { UserProfile } from './types';
 import { CookieConsent } from './components/CookieConsent';
 import { AgeGate } from './components/AgeGate';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const App: React.FC = () => {
   // Global State (Mocked)
@@ -124,11 +125,13 @@ const App: React.FC = () => {
             <Route
               path="/generator"
               element={
-                <Generator
-                  user={user}
-                  handleConsumption={handleConsumption}
-                  onGenerate={handleGenerate}
-                />
+                <ErrorBoundary>
+                  <Generator
+                    user={user}
+                    handleConsumption={handleConsumption}
+                    onGenerate={handleGenerate}
+                  />
+                </ErrorBoundary>
               }
             />
             <Route

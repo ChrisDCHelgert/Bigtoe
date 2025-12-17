@@ -32,7 +32,7 @@ const SKIN_TONE_PRESETS = [
 export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, onGenerate }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [freeText, setFreeText] = useState('');
+  // Removed unused freeText state
   const [selectedPreset, setSelectedPreset] = useState<QualityPresetId>('standard');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -86,9 +86,9 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
         isPremium: user.isPremium,
       }, user.isPremium);
 
-      setGeneratedImage(result);
+      setGeneratedImage(result.url); // Fix: valid string URL
       handleConsumption(cost, 'generate');
-      onGenerate(result, { params, preset: selectedPreset });
+      onGenerate(result.url, { params, preset: selectedPreset });
       setErrorMessage(null);
     } catch (error: any) {
       console.error('Generation failed:', error);
@@ -250,14 +250,30 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
               {/* Lighting / Atmosphere */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-400 uppercase">
-                  Beleuchtung / Atmosphäre
+                  Beleuchtung
                 </label>
                 <input
                   type="text"
                   className="w-full bg-brand-bg border border-white/10 rounded-lg p-3 text-sm text-white placeholder-gray-500 focus:border-brand-primary outline-none hover:border-white/30 transition-colors"
-                  placeholder="z.B. Sonnenlicht von links, diffuses Licht..."
-                  value={freeText}
-                  onChange={(e) => setFreeText(e.target.value)}
+                  style={{ backgroundColor: '#0f172a', color: 'white' }}
+                  placeholder="z.B. Sonnenlicht, Studio..."
+                  value={params.lighting || ''}
+                  onChange={(e) => setParams({ ...params, lighting: e.target.value })}
+                />
+              </div>
+
+              {/* Custom Prompt */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-400 uppercase">
+                  Zusätzliche Details
+                </label>
+                <textarea
+                  rows={2}
+                  className="w-full bg-brand-bg border border-white/10 rounded-lg p-3 text-sm text-white placeholder-gray-500 focus:border-brand-primary outline-none hover:border-white/30 transition-colors resize-none"
+                  style={{ backgroundColor: '#0f172a', color: 'white' }}
+                  placeholder="Keine Socken, kein Schmuck..."
+                  value={params.customPrompt || ''}
+                  onChange={(e) => setParams({ ...params, customPrompt: e.target.value })}
                 />
               </div>
             </div>

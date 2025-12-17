@@ -39,6 +39,7 @@ export interface GeneratorParams {
   side: 'left' | 'right' | 'both';
   cameraAngle: 'top' | 'side' | '45' | 'macro';
   medicalConditions?: string[];
+  lighting?: string;
   freeText?: string;
   isRandomMode?: boolean;
 }

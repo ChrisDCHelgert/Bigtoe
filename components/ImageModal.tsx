@@ -37,23 +37,22 @@ export const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose, title
     const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.5));
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md">
             {/* Close button */}
             <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white z-10"
+                className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white z-20"
                 aria-label="Close"
             >
                 <X size={24} />
             </button>
 
             {/* Controls */}
-            <div className="absolute top-4 left-4 flex gap-2 z-10">
+            <div className="absolute top-4 left-4 flex gap-2 z-20">
                 <button
                     onClick={handleZoomOut}
                     disabled={zoom <= 0.5}
                     className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Zoom out"
                 >
                     <ZoomOut size={20} />
                 </button>
@@ -61,7 +60,6 @@ export const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose, title
                     onClick={handleZoomIn}
                     disabled={zoom >= 3}
                     className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Zoom in"
                 >
                     <ZoomIn size={20} />
                 </button>
@@ -69,36 +67,25 @@ export const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose, title
                     href={imageUrl}
                     download
                     className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
-                    aria-label="Download"
                 >
                     <Download size={20} />
                 </a>
             </div>
 
-            {/* Zoom level indicator */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white/10 px-3 py-1 rounded-full text-white text-sm z-10">
-                {Math.round(zoom * 100)}%
-            </div>
-
             {/* Image container */}
             <div
-                className="max-w-[90vw] max-h-[90vh] overflow-auto cursor-move"
-                onClick={(e) => e.stopPropagation()}
+                className="w-full h-full flex items-center justify-center overflow-hidden"
+                onClick={onClose}
             >
                 <img
                     src={imageUrl}
                     alt={title || 'Preview'}
-                    className="transition-transform duration-200"
+                    className="max-w-none transition-transform duration-200 cursor-move"
                     style={{ transform: `scale(${zoom})` }}
                     draggable={false}
+                    onClick={(e) => e.stopPropagation()}
                 />
             </div>
-
-            {/* Click outside to close */}
-            <div
-                className="absolute inset-0 -z-10"
-                onClick={onClose}
-            />
         </div>
     );
 };

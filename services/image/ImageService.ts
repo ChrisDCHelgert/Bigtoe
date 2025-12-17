@@ -85,8 +85,15 @@ export class ImageService {
 
         console.log(`[ImageService] Selected Provider: ${provider.id} (Premium: ${userIsPremium})`);
 
+        // ENFORCE REALISM (V5.0)
+        // We append strong keywords to ensure the model doesn't drift into "artistic/cartoon" territory
+        const enhancedRequest = {
+            ...request,
+            prompt: `${request.prompt}, raw photo, anatomical accuracy, realistic skin texture, 8k, dslr, soft lighting, masterpiece`
+        };
+
         // 1. Validation check
-        const validation = await provider.validatePrompt(request.prompt);
+        const validation = await provider.validatePrompt(enhancedRequest.prompt);
         if (!validation.allowed) {
             this.logTelemetry({
                 timestamp: new Date().toISOString(),

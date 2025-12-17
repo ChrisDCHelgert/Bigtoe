@@ -2,7 +2,7 @@
 // Fetish/Creator UX - V4.0 Stable & Reliable (DE)
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings, Sparkles, Sliders, Wand2, Info, Check, Eye, Footprints, Camera, Layers, AlertCircle, RefreshCw } from 'lucide-react';
+import { Settings, Sparkles, Sliders, Wand2, Info, Check, Eye, Footprints, Camera, Layers, AlertCircle, RefreshCw, Heart } from 'lucide-react';
 import { Button } from '../components/Button';
 import { ImageModal } from '../components/ImageModal';
 import { imageService } from '../services/image/ImageService';
@@ -31,6 +31,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   // Form State
   const [params, setParams] = useState({
@@ -47,15 +48,21 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
   const previewRef = useRef<HTMLDivElement>(null);
 
-  // --- PERSISTENCE ---
-  useEffect(() => {
-    // Load last image from local storage on mount
-    const savedImage = localStorage.getItem('bigtoe_last_image');
-    if (savedImage) {
-      setResultImage(savedImage);
-      setStatus('success');
+  // --- HARD RESET (V5.0) ---
+  // No auto-loading from localStorage. Always start fresh.
+
+  // --- FAVORITES LOGIC ---
+  const toggleFavorite = () => {
+    if (!resultImage) return;
+    const newState = !isFavorite;
+    setIsFavorite(newState);
+
+    // In a real app, save to backend/localStorage array
+    // For now, we just toggle UI state
+    if (newState) {
+      console.log("Saved to favorites:", resultImage);
     }
-  }, []);
+  };
 
   const handleStylePreset = (preset: typeof STYLE_PRESETS[0]) => {
     const matchingAngle = CAMERA_ANGLES.find(a => a.value === preset.params.angle) || CAMERA_ANGLES[1];
@@ -475,17 +482,22 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                     />
 
                     {/* Hover Overlay */}
-                    {!isLoading && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-8 p-4 z-10 pointer-events-none">
-                        <Button
-                          onClick={() => setIsModalOpen(true)}
-                          size="sm" variant="secondary"
-                          className="backdrop-blur-md bg-white/10 border-white/20 pointer-events-auto"
-                        >
-                          <Eye size={14} className="mr-2" /> Vollbild / Zoom
-                        </Button>
-                      </div>
-                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-8 p-4 z-10 pointer-events-none gap-3">
+                      <Button
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(); }}
+                        size="sm" variant="secondary"
+                        className={`backdrop-blur-md border-white/20 pointer-events-auto ${isFavorite ? 'bg-brand-primary text-white border-brand-primary' : 'bg-white/10 text-white'}`}
+                      >
+                        <Heart size={14} className={isFavorite ? "fill-current" : ""} />
+                      </Button>
+                      <Button
+                        onClick={() => setIsModalOpen(true)}
+                        size="sm" variant="secondary"
+                        className="backdrop-blur-md bg-white/10 border-white/20 pointer-events-auto"
+                      >
+                        <Eye size={14} className="mr-2" /> Vollbild
+                      </Button>
+                    </div>
                   </>
                 )}
 

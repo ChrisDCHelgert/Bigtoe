@@ -3,22 +3,22 @@ export const TRANSLATIONS = {
     de: {
         home: {
             privacyBadge: "Anonym & Diskret",
-            headline: "Erlebe deine Fantasien.",
-            subheadline: "Detailgetreu. Ästhetisch. Grenzenlos. Die Nr. 1 KI für individuelle Fuß-Visuals. Kontrolle über jedes Detail – sicher & privat.",
-            ctaPrimary: "Jetzt generieren",
+            headline: "Jedes Detail. Jede Linie. Jede Fantasie.",
+            subheadline: "Detailgetreu. Ästhetisch. 100% fiktiv. Erstelle hyperrealistische Fußbilder nach deinen Vorstellungen – Textur, Perspektive, Spannung.",
+            ctaPrimary: "Jetzt Fußbilder generieren",
             ctaSecondary: "",
             features: {
                 control: {
                     title: "Volle Kontrolle",
-                    desc: "Licht, Sohle, Pose – du entscheidest."
+                    desc: "Bestimme Perspektive, Spannung, Textur und Licht – jedes Detail liegt bei dir."
                 },
                 realistic: {
                     title: "Fühlbare Tiefe",
-                    desc: "Texturen, die unter die Haut gehen."
+                    desc: "Bilder, die nicht nur sichtbar sind, sondern spürbar wirken."
                 },
                 private: {
                     title: "100% Diskret",
-                    desc: "Deine Galerie. Dein Geheimnis."
+                    desc: "Deine Galerie. Dein Raum. Keine echten Personen. Keine Einsicht von außen."
                 }
             }
         }

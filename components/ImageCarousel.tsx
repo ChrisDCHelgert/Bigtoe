@@ -5,16 +5,17 @@ import React from 'react';
 // Since we don't have real generated assets, we use placeholder URLs that represent the 'concept' or generic placeholders
 // In a real app, these would be local assets or CDN links.
 const PLACEHOLDER_IMAGES = [
-    'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=600&h=800', // Texture/Mood
-    'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=600&h=800', // Feet/Socks concept
-    'https://images.unsplash.com/photo-1621252179027-94459d27d3ee?auto=format&fit=crop&q=80&w=600&h=800',
-    'https://images.unsplash.com/photo-1632057993072-f6723220bebd?auto=format&fit=crop&q=80&w=600&h=800',
-    'https://images.unsplash.com/photo-1560060141-7b9018741ced?auto=format&fit=crop&q=80&w=600&h=800',
-    'https://images.unsplash.com/photo-1605559911160-a29632f802d9?auto=format&fit=crop&q=80&w=600&h=800',
-    'https://images.unsplash.com/photo-1624545082142-b9cf6d427218?auto=format&fit=crop&q=80&w=600&h=800',
-    'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=600&h=800',
-    'https://images.unsplash.com/photo-1582298538104-fe2e74c2ed54?auto=format&fit=crop&q=80&w=600&h=800',
-    'https://images.unsplash.com/photo-1574102294972-032f16d091b0?auto=format&fit=crop&q=80&w=600&h=800',
+    // Specific foot/sole/aesthetic focus
+    'https://images.unsplash.com/photo-1519457431-44ccd64a579b?auto=format&fit=crop&q=80&w=400&h=600', // Soles
+    'https://images.unsplash.com/photo-1621252179027-94459d27d3ee?auto=format&fit=crop&q=80&w=400&h=600', // Toes/Pedicure
+    'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&q=80&w=400&h=600', // Barefoot
+    'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=400&h=600', // Sneaker/Bare combo
+    'https://images.unsplash.com/photo-1624545082142-b9cf6d427218?auto=format&fit=crop&q=80&w=400&h=600', // Arches
+    'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=400&h=600', // Legs/Feet
+    'https://images.unsplash.com/photo-1605559911160-a29632f802d9?auto=format&fit=crop&q=80&w=400&h=600', // Aesthetic
+    'https://images.unsplash.com/photo-1574102294972-032f16d091b0?auto=format&fit=crop&q=80&w=400&h=600', // Soft light
+    'https://images.unsplash.com/photo-1560060141-7b9018741ced?auto=format&fit=crop&q=80&w=400&h=600', // High arch
+    'https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&q=80&w=400&h=600', // Relaxed
 ];
 
 export const ImageCarousel: React.FC = () => {

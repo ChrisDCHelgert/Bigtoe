@@ -21,22 +21,21 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
     <div className="min-h-[calc(100vh-80px)] flex flex-col justify-center">
 
       {/* Hero Content */}
-      <section className="relative px-4 sm:px-6 lg:px-8 py-10 max-w-6xl mx-auto w-full text-center">
+      <section className="relative px-4 sm:px-6 lg:px-8 py-6 max-w-6xl mx-auto w-full text-center">
 
         {/* Privacy Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-xs font-semibold uppercase tracking-wider mb-8">
-          <Lock size={12} />
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-[10px] font-semibold uppercase tracking-wider mb-4">
+          <Lock size={10} />
           <span>{t.privacyBadge}</span>
         </div>
 
         {/* Headline */}
-        <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight tracking-tight">
-          {t.headline.split('. ')[0]}. <br />
-          <span className="text-gray-400">{t.headline.split('. ').slice(1).join('. ')}</span>
+        <h1 className="text-3xl md:text-5xl font-bold text-white mb-3 leading-tight tracking-tight">
+          {t.headline}
         </h1>
 
         {/* Subline */}
-        <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+        <p className="text-sm md:text-base text-gray-400 max-w-3xl mx-auto mb-6 leading-relaxed">
           {t.subheadline}
         </p>
 

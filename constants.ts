@@ -130,10 +130,14 @@ export const CAMERA_ANGLES = [
 
 export const SCENE_OPTIONS = [
   'Studio Weiß',
-  'Studio Dunkel',
+  'Studio Schwarz', // requested
   'Schlafzimmer',
+  'Hotelzimmer', // requested
+  'Badezimmer / Dusche', // requested
   'Minimal / Schwarz',
   'Outdoor Beton',
+  'Outdoor Sonnenlicht', // "Outdoor Warm" 
+  'Auto Innenraum', // requested
   'Outdoor Sand',
   'Outdoor Wiese'
 ];
@@ -141,9 +145,10 @@ export const SCENE_OPTIONS = [
 export const LIGHTING_CHIPS = [
   'Softbox Studio',
   'Tageslicht (Fenster)',
-  'Cinematic Low Light',
   'Golden Hour',
-  'Blitzlicht'
+  'Morgensonne', // requested
+  'Cinematic Low Light',
+  'Blitzlicht' // Flash
 ];
 
 export const FOOT_SIDES: Record<string, string> = {

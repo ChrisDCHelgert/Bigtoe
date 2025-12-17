@@ -10,10 +10,15 @@ interface GalleryProps {
   onDelete?: (id: string) => void;
 }
 
+import { ImageModal } from '../components/ImageModal';
+
+// ... interface ...
+
 export const Gallery: React.FC<GalleryProps> = ({ images = [], onToggleFavorite, onDelete }) => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('All');
   const [favorites, setFavorites] = useState(FavoritesService.getFavorites());
+  const [selectedImage, setSelectedImage] = useState<any | null>(null);
   const tabs = ['All', 'Favorites', 'Soles', 'Arches'];
 
   // Refresh favorites on mount and periodically check/sync? 
@@ -93,7 +98,11 @@ export const Gallery: React.FC<GalleryProps> = ({ images = [], onToggleFavorite,
         </div>
 
         {displayImages.map((img, idx) => (
-          <div key={img.id || idx} className="aspect-[4/5] rounded-xl overflow-hidden relative group cursor-pointer bg-gray-800">
+          <div
+            key={img.id || idx}
+            onClick={() => setSelectedImage(img)}
+            className="aspect-[4/5] rounded-xl overflow-hidden relative group cursor-pointer bg-gray-800"
+          >
             <img src={img.url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Gallery item" />
 
             {/* Overlay Actions */}
@@ -113,7 +122,12 @@ export const Gallery: React.FC<GalleryProps> = ({ images = [], onToggleFavorite,
                 </button>
               </div>
               <div className="flex justify-center">
-                <span className="text-xs font-bold bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-white">View</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setSelectedImage(img); }}
+                  className="text-xs font-bold bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-white hover:bg-white/30 transition-colors"
+                >
+                  View
+                </button>
               </div>
             </div>
 
@@ -121,6 +135,16 @@ export const Gallery: React.FC<GalleryProps> = ({ images = [], onToggleFavorite,
           </div>
         ))}
       </div>
-    </div >
+
+      {/* Viewer Modal */}
+      {selectedImage && (
+        <ImageModal
+          isOpen={!!selectedImage}
+          onClose={() => setSelectedImage(null)}
+          imageUrl={selectedImage.url}
+          showGalleryActions={true}
+        />
+      )}
+    </div>
   );
 };

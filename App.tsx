@@ -8,6 +8,10 @@ import { Result } from './screens/Result';
 import { Gallery } from './screens/Gallery';
 import { Checkout } from './screens/Checkout';
 import { Credits } from './screens/Credits';
+import { Impressum } from './screens/legal/Impressum';
+import { Datenschutz } from './screens/legal/Datenschutz';
+import { AGB } from './screens/legal/AGB';
+import { CookieSettings } from './screens/legal/CookieSettings';
 import { UserProfile } from './types';
 
 const App: React.FC = () => {

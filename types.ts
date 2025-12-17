@@ -38,7 +38,7 @@ export interface GeneratorParams {
   customPrompt: string;
   side: 'left' | 'right' | 'both';
   cameraAngle: 'top' | 'side' | '45' | 'macro';
-  medicalConditions?: string[];
+  visualDetails?: string[];
   lighting?: string;
   freeText?: string;
   isRandomMode?: boolean;

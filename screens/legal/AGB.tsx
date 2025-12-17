@@ -29,9 +29,13 @@ export const AGB: React.FC = () => {
                 <section className="mb-8">
                     <h2 className="text-2xl font-bold mb-4">2. Leistungsbeschreibung</h2>
                     <p className="text-gray-300 leading-relaxed mb-4">
-                        Der Anbieter stellt eine webbasierte KI-Plattform zur Generierung von Bildern für
-                        medizinische und podologische Zwecke bereit. Die genauen Leistungsmerkmale ergeben
-                        sich aus der jeweils aktuellen Leistungsbeschreibung auf der Website.
+                        Der Anbieter stellt eine webbasierte KI-Plattform zur Generierung von fiktiven Bildern
+                        ("AI Art") für kreative, künstlerische und private Zwecke bereit.
+                    </p>
+                    <p className="border-l-4 border-yellow-500 pl-4 py-2 bg-yellow-500/10 text-yellow-200 mb-4">
+                        <strong>Wichtiger Hinweis:</strong> Die generierten Inhalte sind fiktiv. Es werden keine
+                        realen Personen abgebildet. Die Software dient ausdrücklich <u>nicht</u> medizinischen
+                        Zwecken, der Diagnose oder der Therapieplanung.
                     </p>
 
                     <h3 className="text-xl font-semibold mb-3 mt-6">2.1 Credits-System</h3>

@@ -1,81 +1,82 @@
+
 // screens/Generator.tsx
 // Medical-grade image generator with professional UI
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wand2, PlayCircle, Eye, AlertTriangle, Settings, Microscope } from 'lucide-react';
+import { Settings, Sparkles, PlayCircle, Eye, Sliders, Wand2, RefreshCw } from 'lucide-react';
 import { Button } from '../components/Button';
 import { ImageModal } from '../components/ImageModal';
-import { enhancePrompt } from '../services/geminiService';
 import { imageService } from '../services/image/ImageService';
-import { QUALITY_PRESETS, QualityPresetId, getPreset } from '../services/image/presets';
-import { PRESETS, MEDICAL_CONDITIONS, CAMERA_ANGLES, FOOT_SIDES } from '../constants';
+import { PRESETS, VISUAL_DETAILS, SKIN_TONE_PRESETS } from '../constants';
 import { UserProfile, GeneratorParams } from '../types';
 import { GeneratorPresetsSelector } from './GeneratorWithPresets';
 
 interface GeneratorProps {
   user: UserProfile;
-  handleConsumption: (amount: number, type: 'generate' | 'upscale') => void;
-  onGenerate: (url: string, metadata: any) => void;
+  handleConsumption: (amount: number, type: string) => void;
+  onGenerate: (imageUrl: string, metadata: any) => void;
 }
-
-// Medical-grade skin tone presets
-const SKIN_TONE_PRESETS = [
-  { name: 'Type I', value: '#fde9dc', hex: '#fde9dc' },
-  { name: 'Type II', value: '#f8d9c3', hex: '#f8d9c3' },
-  { name: 'Type III', value: '#e8bc9e', hex: '#e8bc9e' },
-  { name: 'Type IV', value: '#d4a574', hex: '#d4a574' },
-  { name: 'Type V', value: '#ae7e56', hex: '#ae7e56' },
-  { name: 'Type VI', value: '#754c29', hex: '#754c29' },
-];
 
 export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, onGenerate }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  // Removed unused freeText state
-  const [selectedPreset, setSelectedPreset] = useState<QualityPresetId>('standard');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [selectedPreset, setSelectedPreset] = useState<keyof typeof PRESETS>('standard');
 
-  // Form State
   const [params, setParams] = useState<GeneratorParams>({
     gender: 'female',
-    realism: 'photo',
+    skinTone: 'medium skin tone',
     footSize: 38,
-    toeShape: 'Egyptian',
-    perspective: 'POV',
-    cameraAngle: 'top',
-    side: 'both',
+    toeShape: 'greek',
+    perspective: 'close-up',
     scene: 'Indoor',
-    skinTone: '#f8d9c3', // Default to Type II
+    realism: 'photo',
     customPrompt: '',
-    medicalConditions: [],
-    isRandomMode: false
+    side: 'both',
+    cameraAngle: 'macro',
+    visualDetails: [],
+    lighting: '',
   });
 
+  const getPreset = (key: string) => PRESETS[key as keyof typeof PRESETS] || PRESETS.standard;
+
   const handlePreviewPrompt = () => {
-    alert('Prompt Preview (TODO: Show actual generated prompt)');
+    // Construct simplified prompt for preview
+    const attributes = [
+      params.gender,
+      params.skinTone,
+      params.side !== 'both' ? `${params.side} foot` : 'both feet',
+      params.visualDetails?.join(', '),
+      params.lighting ? `Lighting: ${params.lighting} ` : '',
+      params.customPrompt
+    ].filter(Boolean).join(', ');
+
+    alert(`Active Generation Prompt: \n\n${attributes} \n\nStrictly photorealistic, 8k uhd.`);
   };
 
   const handleGenerate = async () => {
-    if (loading) return;
-
-    setErrorMessage(null);
-    const preset = getPreset(selectedPreset);
-    const cost = preset.creditCost;
-
-    // Check credits
-    if (!user.isPremium && user.freeTrialUsed >= user.freeTrialTotal && user.credits < cost) {
-      setErrorMessage('Nicht genügend Credits verfügbar. Bitte laden Sie Credits auf oder upgraden Sie zu Premium.');
+    if (!user.isPremium && user.credits < getPreset(selectedPreset).creditCost) {
+      setErrorMessage("Insufficient credits. Please upgrade to continue.");
       return;
     }
 
-    try {
-      setLoading(true);
+    setLoading(true);
+    setErrorMessage(null);
 
-      // Construct detailed prompt from params
-      const constructedPrompt = `Professional podiatry photo, ${params.gender} feet, size ${params.footSize}, ${params.skinTone} skin tone, ${params.view} view, ${params.lighting}, ${params.scene} setting. ${params.customPrompt}`;
+    try {
+      // Build constructed prompt inside component for clarity
+      const constructedPrompt = [
+        `photorealistic ${params.gender} feet`,
+        `skin tone: ${params.skinTone} `,
+        `angle: ${params.cameraAngle} `,
+        `scene: ${params.scene} `,
+        params.visualDetails?.join(', '),
+        params.lighting,
+        params.customPrompt
+      ].filter(Boolean).join(', ');
 
       // Call image generation service
       const result = await imageService.generateImage({
@@ -87,15 +88,12 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
       }, user.isPremium);
 
       setGeneratedImage(result.url); // Fix: valid string URL
-      handleConsumption(cost, 'generate');
+      handleConsumption(getPreset(selectedPreset).creditCost, 'generate');
       onGenerate(result.url, { params, preset: selectedPreset });
-      setErrorMessage(null);
-    } catch (error: any) {
-      console.error('Generation failed:', error);
-      // User-friendly error message
-      setErrorMessage(
-        'Die Bildgenerierung ist fehlgeschlagen. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support, falls das Problem weiterhin besteht.'
-      );
+
+    } catch (error) {
+      console.error("Generierung fehlgeschlagen", error);
+      setErrorMessage("Generation failed. Please try again or check your settings.");
     } finally {
       setLoading(false);
     }
@@ -110,23 +108,23 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
         <div className="lg:col-span-3 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
           <div className="bg-brand-card rounded-xl p-5 border border-white/10">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4 flex items-center gap-2">
-              <Settings size={14} /> Basis-Einstellungen
+              <Settings size={14} /> Basic Settings
             </h3>
 
             <div className="space-y-5">
               <GeneratorPresetsSelector user={user} onChangePreset={setSelectedPreset} />
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-400 uppercase">Geschlecht</label>
+                <label className="text-xs font-semibold text-gray-400 uppercase">Model Type / Gender</label>
                 <div className="grid grid-cols-3 gap-2">
                   {['Female', 'Male', 'Diverse'].map(g => (
                     <button
                       key={g}
                       onClick={() => setParams({ ...params, gender: g.toLowerCase() as any })}
-                      className={`py-2 text-xs rounded-lg border transition-colors font-medium ${params.gender === g.toLowerCase()
-                          ? 'bg-brand-primary border-brand-primary text-white'
-                          : 'bg-brand-bg border-white/10 text-gray-400 hover:border-white/30'
-                        }`}
+                      className={`py - 2 text - xs rounded - lg border transition - colors font - medium ${params.gender === g.toLowerCase()
+                        ? 'bg-brand-primary border-brand-primary text-white'
+                        : 'bg-brand-bg border-white/10 text-gray-400 hover:border-white/30'
+                        } `}
                     >
                       {g}
                     </button>
@@ -136,7 +134,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-400 uppercase flex justify-between">
-                  <span>Fußgröße (EU)</span>
+                  <span>Foot Size (EU)</span>
                   <span className="font-mono text-brand-primary font-bold">{params.footSize}</span>
                 </label>
                 <input
@@ -150,19 +148,19 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-400 uppercase">Hautton</label>
+                <label className="text-xs font-semibold text-gray-400 uppercase">Skin Tone</label>
                 <div className="grid grid-cols-2 gap-2">
                   {SKIN_TONE_PRESETS.map((tone) => (
                     <button
                       key={tone.value}
                       onClick={() => setParams({ ...params, skinTone: tone.value })}
-                      className={`flex items-center gap-3 p-2 rounded-lg border transition-all ${params.skinTone === tone.value
-                          ? 'border-brand-primary bg-brand-primary/10'
-                          : 'border-white/10 hover:border-white/30 bg-brand-bg'
-                        }`}
+                      className={`flex items - center gap - 3 p - 2 rounded - lg border transition - all ${params.skinTone === tone.value
+                        ? 'border-brand-primary bg-brand-primary/10'
+                        : 'border-white/10 hover:border-white/30 bg-brand-bg'
+                        } `}
                     >
                       <div className="w-6 h-6 rounded-full border border-white/20 flex-shrink-0" style={{ backgroundColor: tone.hex }} />
-                      <span className="text-xs text-gray-300">{tone.name}</span>
+                      <span className="text-xs text-gray-300 truncate">{tone.name}</span>
                     </button>
                   ))}
                 </div>
@@ -171,17 +169,17 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
           </div>
         </div>
 
-        {/* MIDDLE COL (30%) - Medical & Pose */}
+        {/* MIDDLE COL (30%) - Visual Details & Pose */}
         <div className="lg:col-span-3 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
           <div className="bg-brand-card rounded-xl p-5 border border-white/10 h-full">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4 flex items-center gap-2">
-              <Microscope size={14} /> Medizin & Position
+              <Sliders size={14} /> Pose & Details
             </h3>
 
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-gray-400 uppercase">Seite</label>
+                  <label className="text-xs font-semibold text-gray-400 uppercase">View</label>
                   <select
                     value={params.side}
                     onChange={(e) => setParams({ ...params, side: e.target.value as any })}
@@ -189,12 +187,12 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                     style={{ backgroundColor: '#0f172a' }}
                   >
                     {[
-                      { v: 'left', l: 'Links' }, { v: 'right', l: 'Rechts' }, { v: 'both', l: 'Beide' }
+                      { v: 'left', l: 'Left' }, { v: 'right', l: 'Right' }, { v: 'both', l: 'Both' }
                     ].map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-gray-400 uppercase">Winkel</label>
+                  <label className="text-xs font-semibold text-gray-400 uppercase">Angle</label>
                   <select
                     value={params.cameraAngle}
                     onChange={(e) => setParams({ ...params, cameraAngle: e.target.value as any })}
@@ -202,7 +200,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                     style={{ backgroundColor: '#0f172a' }}
                   >
                     {[
-                      { v: 'top', l: 'Von oben' }, { v: 'side', l: 'Seitlich' }, { v: '45', l: '45°' }, { v: 'macro', l: 'Makro' }
+                      { v: 'top', l: 'Top Down' }, { v: 'side', l: 'Side Profile' }, { v: '45', l: '45° Angle' }, { v: 'macro', l: 'Close Up (Macro)' }
                     ].map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
                   </select>
                 </div>
@@ -210,24 +208,24 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
               <div className="space-y-3">
                 <label className="text-xs font-semibold text-gray-400 uppercase flex items-center gap-2">
-                  <AlertTriangle size={12} className="text-orange-400" /> Pathologie
+                  <Sparkles size={12} className="text-purple-400" /> Visual Characteristics
                 </label>
                 <div className="grid grid-cols-1 gap-2">
-                  {MEDICAL_CONDITIONS.map(cond => (
+                  {VISUAL_DETAILS.map(detail => (
                     <button
-                      key={cond}
+                      key={detail}
                       onClick={() => {
-                        const newConds = params.medicalConditions?.includes(cond)
-                          ? params.medicalConditions.filter(c => c !== cond)
-                          : [...(params.medicalConditions || []), cond];
-                        setParams({ ...params, medicalConditions: newConds });
+                        const newDetails = params.visualDetails?.includes(detail)
+                          ? params.visualDetails.filter(c => c !== detail)
+                          : [...(params.visualDetails || []), detail];
+                        setParams({ ...params, visualDetails: newDetails });
                       }}
-                      className={`px-3 py-2 text-xs text-left rounded-lg border transition-colors ${params.medicalConditions?.includes(cond)
-                          ? 'border-orange-400 bg-orange-400/10 text-orange-300 font-semibold'
-                          : 'border-white/10 bg-brand-bg text-gray-400 hover:border-white/30'
-                        }`}
+                      className={`px - 3 py - 2 text - xs text - left rounded - lg border transition - colors ${params.visualDetails?.includes(detail)
+                        ? 'border-purple-400 bg-purple-400/10 text-purple-300 font-semibold'
+                        : 'border-white/10 bg-brand-bg text-gray-400 hover:border-white/30'
+                        } `}
                     >
-                      {cond.split('(')[0].trim()}
+                      {detail}
                     </button>
                   ))}
                 </div>
@@ -242,23 +240,23 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
           <div className="bg-brand-card rounded-xl p-5 border border-white/10 flex-shrink-0">
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-400 uppercase">Szene</label>
+                <label className="text-xs font-semibold text-gray-400 uppercase">Scene / Background</label>
                 <select
                   value={params.scene}
                   onChange={(e) => setParams({ ...params, scene: e.target.value })}
                   className="w-full bg-brand-bg border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none"
                   style={{ backgroundColor: '#0f172a' }}
                 >
-                  {['Indoor', 'Outdoor', 'Beach', 'Studio'].map(s => <option key={s} value={s}>{s === 'Indoor' ? 'Innenraum' : s === 'Outdoor' ? 'Außen' : s === 'Beach' ? 'Strand' : s}</option>)}
+                  {['Indoor', 'Outdoor', 'Beach', 'Studio', 'Bed', 'Carpet', 'Poolside'].map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-400 uppercase">Licht</label>
+                <label className="text-xs font-semibold text-gray-400 uppercase">Lighting</label>
                 <input
                   type="text"
                   value={params.lighting || ''}
                   onChange={(e) => setParams({ ...params, lighting: e.target.value })}
-                  placeholder="z.B. Softbox"
+                  placeholder="e.g. Cinematic, Sunset, Softbox"
                   className="w-full bg-brand-bg border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none"
                   style={{ backgroundColor: '#0f172a' }}
                 />
@@ -270,7 +268,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 rows={2}
                 className="w-full bg-brand-bg border border-white/10 rounded-lg p-3 text-xs text-white placeholder-gray-500 focus:border-brand-primary outline-none resize-none"
                 style={{ backgroundColor: '#0f172a' }}
-                placeholder="Zusätzliche Details (z.B. keine Socken)... "
+                placeholder="Additional Prompt Details (e.g. no socks, silver anklet)... "
                 value={params.customPrompt || ''}
                 onChange={(e) => setParams({ ...params, customPrompt: e.target.value })}
               />
@@ -286,7 +284,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
             >
               <div className="flex items-center justify-center gap-2">
                 <PlayCircle size={18} />
-                <span>{loading ? 'Generiere...' : 'Jetzt Generieren'}</span>
+                <span>{loading ? 'Generating...' : 'Generate Image'}</span>
               </div>
             </Button>
             {errorMessage && <p className="text-xs text-red-400 mt-2 text-center">{errorMessage}</p>}
@@ -303,6 +301,9 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                   onClick={() => setShowImageModal(true)}
                 />
                 <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => handleGenerate()} className="p-2 bg-black/60 rounded-full text-white hover:bg-black">
+                    <RefreshCw size={16} />
+                  </button>
                   <button onClick={() => setShowImageModal(true)} className="p-2 bg-black/60 rounded-full text-white hover:bg-black">
                     <Eye size={16} />
                   </button>
@@ -313,8 +314,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 <div className="w-16 h-16 rounded-full bg-white/5 mx-auto mb-4 flex items-center justify-center">
                   <Wand2 size={24} className="opacity-50" />
                 </div>
-                <p className="text-sm">Vorschau-Bereich</p>
-                <p className="text-xs opacity-50 mt-1">Das Ergebnis erscheint hier</p>
+                <p className="text-sm">Preview Area</p>
+                <p className="text-xs opacity-50 mt-1">Generated images appear here</p>
               </div>
             )}
           </div>
@@ -326,7 +327,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
         <ImageModal
           imageUrl={generatedImage}
           onClose={() => setShowImageModal(false)}
-          title="Generiertes Bild"
+          title="Generated Image"
         />
       )}
     </div>

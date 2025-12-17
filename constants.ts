@@ -7,28 +7,28 @@ export const PRESETS = [
 export const PLANS = [
   {
     id: 'basic',
-    name: 'Basic',
+    name: 'Starter',
     price: '9,99 €',
     credits: 100,
-    features: ['50 Bilder/Monat', 'Standard Qualität (HD)', 'Basis-Kategorien'],
-    description: 'Für Einzelpersonen & Einsteiger',
+    features: ['50 Images/Month', 'Standard Quality', 'Basic Styles'],
+    description: 'For casual creators & trying it out',
   },
   {
     id: 'pro',
-    name: 'Pro',
+    name: 'Creator',
     price: '19,99 €',
     credits: 500,
-    features: ['200 Bilder/Monat', 'Hohe Auflösung', 'Priorisierter Server-Zugriff', 'Keine Wartezeit'],
+    features: ['200 Images/Month', 'High Resolution', 'Priority Generation', 'No Watermarks'],
     recommended: true,
-    description: 'Für professionelle Podologen & Praxen',
+    description: 'Best for content creators & artists',
   },
   {
     id: 'premium',
-    name: 'Premium',
+    name: 'Pro',
     price: '29,99 €',
     credits: 1500,
-    features: ['Unbegrenzte Bilder', '4K Ultra-HD', 'VIP Support', 'Exklusive Stile'],
-    description: 'Für Kliniken & Großteams',
+    features: ['Uncapped Potential', '4K Ultra-HD', 'Commercial License', 'Exclusive Prompts'],
+    description: 'For power users & agencies',
   },
 ];
 
@@ -38,12 +38,27 @@ export const CREDIT_PACKS = [
   { id: 'pro', name: 'Pro', credits: 1500, price: '49,99€' },
 ];
 
-export const MEDICAL_CONDITIONS = [
-  'Plattfuß (Flat Foot)',
-  'Spreizfuß (Splay Foot)',
-  'Hallux Valgus',
-  'Hammerzehe',
-  'Hoher Spann (High Arch)'
+export const SKIN_TONE_PRESETS = [
+  { name: 'Pale / Light', value: 'very light skin tone', hex: '#FAD7C0' },
+  { name: 'Fair / Beige', value: 'light skin tone', hex: '#EAC0A5' },
+  { name: 'Medium / Olive', value: 'medium skin tone', hex: '#D2A180' },
+  { name: 'Tan / Bronze', value: 'tan skin tone', hex: '#B88260' },
+  { name: 'Deep / Brown', value: 'dark skin tone', hex: '#8D5B3E' },
+  { name: 'Ebony / Dark', value: 'very dark skin tone', hex: '#583626' },
+];
+
+export const VISUAL_DETAILS = [
+  'High Arch',
+  'Flat Sole',
+  'Long Toes',
+  'Short Toes',
+  'Painted Nails',
+  'Natural Look',
+  'Smooth Texture',
+  'Wrinkled Soles',
+  'Veiny',
+  'Tattooed',
+  'Jewelry/Anklet',
 ];
 
 export const FORBIDDEN_WORDS = [

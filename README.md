@@ -1,16 +1,14 @@
-# BigToe: AI Image Generation Platform
+BigToe is a privacy-first AI generation tool designed for creators, artists, and enthusiasts. It enables the creation of high-fidelity, photorealistic, and fictional foot imagery for artistic or commercial projects without the need for real-world photo shoots.
 
-> **Note:** This project enforces a strict [Content & Compliance Policy](compliance/policy.md). It is designed as a creative tool for photorealistic aesthetics, NOT for generating non-consensual, illegal, or abusive content.
-
-BigToe is a Progressive Web Application (PWA) that leverages Generative AI to create high-fidelity, photorealistic images based on structured user inputs. It features a robust credit-based monetization system, private asset libraries, and enterprise-grade compliance guardrails.
+> **Disclaimer:** All generated content is fictional. No real persons are depicted. This software is for creative use only.
 
 ## 🚀 Key Features
 
-*   **Advanced Generation Engine:** Utilizes SDXL/Flux pipelines via Pollinations.ai and Gemini-enhanced prompting.
-*   **Compliance-First Architecture:** Integrated "Prompt Guard" to prevent policy violations before they happen.
-*   **Private Library:** User assets are stored in isolated, access-controlled buckets.
-*   **Entitlements System:** Credit wallet and subscription management divorced from content logic.
-*   **PWA Ready:** Responsive design for Desktop and Mobile with install capabilities.
+*   **Creator-Centric Workflow:** Customize every detail (arches, soles, lighting, angles) with a UI designed for artists.
+*   **Privacy First:** 100% anonymous generation. No data sharing.
+*   **High-Fidelity AI:** Powered by advanced diffusion models tailored for realistic skin textures and lighting.
+*   **Compliance & Safety:** Strict guardrails against non-consensual or illegal content.
+*   **PWA Ready:** Installable on Desktop and Mobile.
 
 ## 🛠 Tech Stack
 

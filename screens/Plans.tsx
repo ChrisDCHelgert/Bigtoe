@@ -36,8 +36,8 @@ const PLANS = [
             '200 Generierungen / Monat',
             'High Quality (1280x720)',
             'Priorität-Verarbeitung',
-            'Erweiterte Galerie',
-            'Alle medizinischen Features'
+            'Extended Gallery',
+            'Advanced Visual Details'
         ],
         icon: Sparkles,
         color: 'from-purple-500 to-pink-500',
@@ -85,10 +85,10 @@ export const Plans: React.FC<PlansProps> = ({ user }) => {
 
             {/* Header */}
             <div className="text-center mb-12">
-                <h1 className="text-4xl md:text-5xl font-bold mb-4">Wählen Sie Ihren Plan</h1>
+                <h1 className="text-4xl md:text-5xl font-bold mb-4">Choose Your Plan</h1>
                 <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-                    Professionelle AI-Bildgenerierung für Podologie und Fußgesundheit.
-                    Wählen Sie den Plan, der zu Ihren Bedürfnissen passt.
+                    Professional AI image generation for creators.
+                    Select the plan that fits your creative needs.
                 </p>
             </div>
 
@@ -102,15 +102,15 @@ export const Plans: React.FC<PlansProps> = ({ user }) => {
                         <div
                             key={plan.id}
                             className={`relative rounded-2xl border-2 transition-all ${plan.recommended
-                                    ? 'border-brand-primary scale-105 shadow-2xl shadow-brand-primary/20'
-                                    : 'border-white/10 hover:border-white/20'
+                                ? 'border-brand-primary scale-105 shadow-2xl shadow-brand-primary/20'
+                                : 'border-white/10 hover:border-white/20'
                                 } bg-brand-card p-6`}
                         >
                             {/* Recommended Badge */}
                             {plan.recommended && (
                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                                     <span className="bg-brand-primary text-white px-4 py-1 rounded-full text-xs font-bold uppercase">
-                                        ⭐ Empfohlen
+                                        ⭐ Recommended
                                     </span>
                                 </div>
                             )}
@@ -126,7 +126,7 @@ export const Plans: React.FC<PlansProps> = ({ user }) => {
                             {/* Price */}
                             <div className="mb-6">
                                 <span className="text-4xl font-bold">{plan.price}</span>
-                                <span className="text-gray-400 text-sm ml-2">/Monat</span>
+                                <span className="text-gray-400 text-sm ml-2">/month</span>
                             </div>
 
                             {/* Credits */}
@@ -150,7 +150,7 @@ export const Plans: React.FC<PlansProps> = ({ user }) => {
                             {/* CTA Button */}
                             {isCurrentPlan ? (
                                 <Button variant="secondary" fullWidth disabled>
-                                    Aktueller Plan
+                                    Current Plan
                                 </Button>
                             ) : (
                                 <Button
@@ -159,7 +159,7 @@ export const Plans: React.FC<PlansProps> = ({ user }) => {
                                     onClick={() => handleSelectPlan(plan)}
                                     className={plan.recommended ? 'shadow-xl shadow-purple-900/40' : ''}
                                 >
-                                    Plan auswählen
+                                    Select Plan
                                 </Button>
                             )}
                         </div>
@@ -172,20 +172,20 @@ export const Plans: React.FC<PlansProps> = ({ user }) => {
                 <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
                     <div className="flex items-center gap-2">
                         <Shield size={16} className="text-green-500" />
-                        <span>DSGVO-konform</span>
+                        <span>Privacy Focused</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <Shield size={16} className="text-green-500" />
-                        <span>Sichere Zahlung via Stripe</span>
+                        <span>Secure Stripe Payment</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <Shield size={16} className="text-green-500" />
-                        <span>Jederzeit kündbar</span>
+                        <span>Cancel Anytime</span>
                     </div>
                 </div>
                 <p className="text-xs text-gray-500">
-                    Alle Preise inkl. MwSt. Credits verfallen nicht.
-                    <button className="underline ml-1" onClick={() => navigate('/support')}>Hilfe benötigt?</button>
+                    All prices incl. VAT. Credits do not expire.
+                    <button className="underline ml-1" onClick={() => navigate('/support')}>Need help?</button>
                 </p>
             </div>
 

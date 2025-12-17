@@ -60,8 +60,8 @@ export const Checkout: React.FC<CheckoutProps> = ({ onUpgrade }) => {
               key={plan.id}
               onClick={() => handlePlanSelect(plan.id)}
               className={`relative rounded-2xl p-8 border cursor-pointer transition-all duration-300 flex flex-col h-full ${isSelected
-                  ? 'bg-brand-card border-brand-primary shadow-2xl shadow-purple-900/30 ring-1 ring-brand-primary transform scale-[1.02]'
-                  : 'bg-brand-card/50 border-white/10 hover:border-white/20 hover:bg-brand-card'
+                ? 'bg-brand-card border-brand-primary shadow-2xl shadow-purple-900/30 ring-1 ring-brand-primary transform scale-[1.02]'
+                : 'bg-brand-card/50 border-white/10 hover:border-white/20 hover:bg-brand-card'
                 }`}
             >
               {isRecommended && (
@@ -74,6 +74,11 @@ export const Checkout: React.FC<CheckoutProps> = ({ onUpgrade }) => {
                 <h3 className={`text-xl font-bold mb-2 ${isSelected ? 'text-white' : 'text-gray-300'}`}>
                   {plan.name}
                 </h3>
+                {plan.description && (
+                  <p className={`text-xs mb-3 ${isSelected ? 'text-gray-200' : 'text-gray-500'}`}>
+                    {plan.description}
+                  </p>
+                )}
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-bold text-white">{plan.price}</span>
                   <span className="text-sm text-gray-500">/ Monat</span>
@@ -96,8 +101,8 @@ export const Checkout: React.FC<CheckoutProps> = ({ onUpgrade }) => {
 
               <div className={`mt-auto pt-6 border-t ${isSelected ? 'border-white/10' : 'border-white/5'}`}>
                 <div className={`w-full py-2 rounded-lg text-center text-sm font-semibold transition-colors ${isSelected
-                    ? 'bg-brand-primary text-white'
-                    : 'bg-white/5 text-gray-400 group-hover:bg-white/10'
+                  ? 'bg-brand-primary text-white'
+                  : 'bg-white/5 text-gray-400 group-hover:bg-white/10'
                   }`}>
                   {isSelected ? 'Ausgewählt' : 'Auswählen'}
                 </div>

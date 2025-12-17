@@ -11,6 +11,7 @@ export const PLANS = [
     price: '9,99 €',
     credits: 100,
     features: ['50 Bilder/Monat', 'Standard Qualität (HD)', 'Basis-Kategorien'],
+    description: 'Für Einzelpersonen & Einsteiger',
   },
   {
     id: 'pro',
@@ -19,6 +20,7 @@ export const PLANS = [
     credits: 500,
     features: ['200 Bilder/Monat', 'Hohe Auflösung', 'Priorisierter Server-Zugriff', 'Keine Wartezeit'],
     recommended: true,
+    description: 'Für professionelle Podologen & Praxen',
   },
   {
     id: 'premium',
@@ -26,6 +28,7 @@ export const PLANS = [
     price: '29,99 €',
     credits: 1500,
     features: ['Unbegrenzte Bilder', '4K Ultra-HD', 'VIP Support', 'Exklusive Stile'],
+    description: 'Für Kliniken & Großteams',
   },
 ];
 

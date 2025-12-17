@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Download, ZoomIn, ZoomOut, Smartphone, Monitor, Maximize, Loader2, CheckCircle, AlertCircle, Crop, Move, Sparkles } from 'lucide-react';
+import { X, Download, ZoomIn, ZoomOut, Smartphone, Monitor, Maximize, Loader2, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import { GalleryActionsService } from '../services/GalleryActionsService';
 import { GalleryItem, GalleryService } from '../services/GalleryService';
 

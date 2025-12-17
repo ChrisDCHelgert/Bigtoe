@@ -2,13 +2,12 @@
 
 import { ImageProvider, GenerationRequest, GenerationResult, GenerationError, GenerationErrorCode } from './types';
 import { PollinationsProvider } from './providers/PollinationsProvider';
-import { VertexProvider } from './providers/VertexProvider';
+import { StabilityAIProvider } from './providers/StabilityAIProvider';
 
 // Configuration / Feature Flags
 const FLAGS = {
-    ENABLE_VERTEX: import.meta.env.VITE_ENABLE_VERTEX === 'true' || false,
-    VERTEX_ROLLOUT_PERCENT: parseInt(import.meta.env.VITE_VERTEX_ROLLOUT || '0'),
-    ENABLE_FALLBACK: import.meta.env.VITE_ENABLE_FALLBACK !== 'false',
+    ENABLE_STABILITY: true, // Always on for now as per user request
+    ENABLE_FALLBACK: true,
     MAX_RETRIES: 2,
     INITIAL_RETRY_DELAY_MS: 1000
 };
@@ -24,19 +23,18 @@ interface TelemetryEvent {
 }
 
 export class ImageService {
-    private primary: VertexProvider;
+    private primary: StabilityAIProvider;
     private fallback: PollinationsProvider;
 
     constructor() {
-        this.primary = new VertexProvider();
+        this.primary = new StabilityAIProvider();
         this.fallback = new PollinationsProvider();
-        console.log(`[ImageService] Initialized - Legacy Mode: ${!FLAGS.ENABLE_VERTEX}`);
+        console.log(`[ImageService] Initialized - Primary: Stability SDXL`);
     }
 
     private getProvider(userIsPremium: boolean): ImageProvider {
-        if (!FLAGS.ENABLE_VERTEX) return this.fallback;
-        if (userIsPremium && FLAGS.VERTEX_ROLLOUT_PERCENT > 0) return this.primary;
-        return this.fallback;
+        // SDXL is now default for everyone (or at least for this user session)
+        return this.primary;
     }
 
     private async sleep(ms: number) {
@@ -87,9 +85,11 @@ export class ImageService {
 
         // ENFORCE REALISM (V5.0)
         // We append strong keywords to ensure the model doesn't drift into "artistic/cartoon" territory
+        // SDXL handles this well, but we keep the structure.
         const enhancedRequest = {
             ...request,
-            prompt: `${request.prompt}, raw photo, anatomical accuracy, realistic skin texture, 8k, dslr, soft lighting, masterpiece`
+            // SDXL needs less "magic words", but 'photorealistic' helps.
+            prompt: request.prompt // We let the provider/promptBuilder handle the main keywords.
         };
 
         // 1. Validation check

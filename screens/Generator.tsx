@@ -1,8 +1,8 @@
 // screens/Generator.tsx
-// Fetish/Creator UX - Refined 4-Column Studio Layout (DE Version)
+// Fetish/Creator UX - V3.2 Stabilized Layout (DE)
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Settings, Sparkles, Sliders, Wand2, Info, Check, Eye, Footprints, Camera, Sun, Eraser, MoveHorizontal, MoveVertical, Zap, Layers } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Settings, Sparkles, Sliders, Wand2, Info, Check, Eye, Footprints, Camera, Sun, Layers, AlertCircle } from 'lucide-react';
 import { Button } from '../components/Button';
 import { ImageModal } from '../components/ImageModal';
 import { imageService } from '../services/image/ImageService';
@@ -15,7 +15,7 @@ import {
   FOOT_SIDES,
   STYLE_PRESETS
 } from '../constants';
-import { UserProfile, GeneratorParams } from '../types';
+import { UserProfile } from '../types';
 import { StylePresetSelector } from '../components/StylePresetSelector';
 import { Select } from '../components/Select';
 
@@ -34,7 +34,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
   // Form State
   const [params, setParams] = useState({
     quality: 'standard' as 'standard' | 'high' | 'studio',
-    gender: 'female',
+    gender: 'female' as 'female' | 'male' | 'diverse',
     side: 'both' as keyof typeof FOOT_SIDES,
     footSize: 38,
     skinTone: SKIN_TONE_PRESETS[1], // Default Type II
@@ -85,29 +85,36 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
     }
 
     try {
-      const prompt = `Photorealistic ${params.gender} feet, ${FOOT_SIDES[params.side]}, ${params.angle.value}, ${params.skinTone.value}. Details: ${params.visualDetails.join(', ')}. Scene: ${params.scene}. Lighting: ${params.lighting || 'balanced'}. 8k resolution, highly detailed skin texture, realistic toes, masterpiece.`;
+      // Map "diverse" to a prompt description if needed, or rely on model understanding
+      const genderPrompt = params.gender === 'diverse' ? 'non-binary person' : params.gender;
+
+      const prompt = `Photorealistic ${genderPrompt} feet, ${FOOT_SIDES[params.side]}, ${params.angle.value}, ${params.skinTone.value}. Details: ${params.visualDetails.join(', ')}. Scene: ${params.scene}. Lighting: ${params.lighting || 'balanced'}. 8k resolution, highly detailed skin texture, realistic toes, masterpiece.`;
 
       const result = await imageService.generateImage({
         prompt: prompt,
-        aspectRatio: '16:9', // Fixed aspect for standard generator
-        // Note: params can be passed if imageService supports typed params, otherwise spread manually
-        params: {
-          ...params,
-          quality: params.quality, // Explicitly ensure quality is passed if needed
-          visualDetails: params.visualDetails
-        }
+        aspectRatio: '16:9',
+        enhancePrompt: true,
+        params: { ...params }
       }, user.plan === 'Pro' || user.plan === 'Creator');
 
-      // Fix: Use 'url' property from GenerationResult, not 'imageUrl'
-      let finalImageUrl = result.url;
+      // --- ROBUST IMAGE HANDLING ---
+      // 1. Check for standard URL
+      let finalImageUrl = result.url || (result as any).imageUrl;
 
-      // Handle Base64 if needed (if it comes raw without prefix)
-      if (finalImageUrl && !finalImageUrl.startsWith('http') && !finalImageUrl.startsWith('data:')) {
-        finalImageUrl = `data:image/png;base64,${finalImageUrl}`;
+      // 2. Check for Base64 (sometimes returned in 'b64_json' or similar if provider differs)
+      if ((result as any).b64_json) {
+        finalImageUrl = `data:image/png;base64,${(result as any).b64_json}`;
       }
 
+      // 3. Validate and Format
       if (!finalImageUrl) {
-        throw new Error("Kein Bild empfangen.");
+        console.error("No image data found in response:", result);
+        throw new Error("Keine Bilddaten empfangen (Empty Response).");
+      }
+
+      if (typeof finalImageUrl === 'string' && !finalImageUrl.startsWith('http') && !finalImageUrl.startsWith('data:')) {
+        // Assume raw base64 string if not url or data-uri
+        finalImageUrl = `data:image/png;base64,${finalImageUrl}`;
       }
 
       handleConsumption(1, 'generate');
@@ -116,8 +123,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
     } catch (error: any) {
       console.error("Generation failed:", error);
-      setGenerationError(error.message || "Fehler bei der Generierung.");
-      // alert intentionally removed in favor of UI error state
+      setGenerationError(error.message || "Unbekannter Fehler bei der Generierung.");
     } finally {
       setIsGenerating(false);
     }
@@ -125,30 +131,35 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
   return (
     <div className="min-h-screen bg-brand-bg text-white pb-20 font-sans">
-      <div className="max-w-[1800px] mx-auto px-4 md:px-6 py-6">
+      <div className="max-w-[1800px] mx-auto px-4 md:px-6 py-6" id="generator-top">
 
-        {/* Header & Style Presets */}
+        {/* Header & Quick Fetish Styles */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-6 flex items-center gap-3 tracking-tight">
             <Wand2 className="text-brand-primary" size={28} />
             Studio Generator
           </h1>
-          <StylePresetSelector onSelect={handleStylePreset} />
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-bold uppercase text-gray-500 tracking-wider">Quick Fetish Styles</label>
+            <StylePresetSelector onSelect={handleStylePreset} />
+          </div>
         </div>
 
-        {/* 4-Column Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
+        {/* MAIN LAYOUT: 8 Columns Controls | 4 Columns Preview */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-          {/* COLUMN 1: Basic Settings */}
-          <div className="flex flex-col gap-6">
-            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl hover:border-brand-primary/20 transition-colors h-full">
+          {/* LEFT: CONTROLS (8 Cols) */}
+          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            {/* COLUMN A: Basics */}
+            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl h-full">
               <h3 className="text-xs font-bold uppercase text-gray-400 mb-5 flex items-center gap-2 tracking-wider">
                 <Settings size={14} /> Basis-Einstellungen
               </h3>
 
               {/* Quality */}
               <div className="mb-6">
-                <label className="text-xs font-medium text-gray-400 mb-2 block">Qualitäts-Level</label>
+                <label className="text-xs font-medium text-gray-400 mb-2 block">Qualität</label>
                 <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
                   {['standard', 'high', 'studio'].map((q) => (
                     <button
@@ -165,42 +176,38 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 </div>
               </div>
 
-              {/* Model (Gender) */}
+              {/* Model (3-Segment) */}
               <div className="mb-6">
                 <label className="text-xs font-medium text-gray-400 mb-2 block">Modell</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setParams({ ...params, gender: 'female' })}
-                    className={`py-2.5 px-4 rounded-xl border text-sm font-medium transition-all flex items-center justify-center gap-2 ${params.gender === 'female'
-                        ? 'bg-brand-primary/10 border-brand-primary text-white shadow-[0_0_15px_rgba(168,85,247,0.15)]'
-                        : 'bg-black/20 border-white/5 text-gray-400 hover:bg-white/5'
-                      }`}
-                  >
-                    Sie
-                  </button>
-                  <button
-                    onClick={() => setParams({ ...params, gender: 'male' })}
-                    className={`py-2.5 px-4 rounded-xl border text-sm font-medium transition-all flex items-center justify-center gap-2 ${params.gender === 'male'
-                        ? 'bg-brand-primary/10 border-brand-primary text-white shadow-[0_0_15px_rgba(168,85,247,0.15)]'
-                        : 'bg-black/20 border-white/5 text-gray-400 hover:bg-white/5'
-                      }`}
-                  >
-                    Er
-                  </button>
+                <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
+                  {['female', 'male', 'diverse'].map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => setParams({ ...params, gender: g as any })}
+                      className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${params.gender === g
+                          ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/30 shadow-inner'
+                          : 'text-gray-400 hover:text-white'
+                        }`}
+                    >
+                      {g === 'female' && 'Frau'}
+                      {g === 'male' && 'Mann'}
+                      {g === 'diverse' && 'Divers'}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Ansicht (Moved here) */}
+              {/* View/Ansicht */}
               <div className="mb-6">
                 <label className="text-xs font-medium text-gray-400 mb-2 block">Ansicht</label>
-                <div className="flex bg-black/20 p-1 rounded-xl border border-white/5">
+                <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
                   {Object.entries(FOOT_SIDES).map(([key, label]) => (
                     <button
                       key={key}
                       onClick={() => setParams({ ...params, side: key as any })}
-                      className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${params.side === key
+                      className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${params.side === key
                           ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/30'
-                          : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                          : 'text-gray-400 hover:text-white'
                         }`}
                     >
                       {key === 'left' && 'Links'}
@@ -211,7 +218,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 </div>
               </div>
 
-              {/* Reference Size */}
+              {/* Size */}
               <div className="mb-6">
                 <label className="text-xs font-medium text-gray-400 mb-2 block flex justify-between">
                   <span>Schuhgröße</span>
@@ -226,7 +233,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 />
               </div>
 
-              {/* Skin Tone Circles */}
+              {/* Skin Tone */}
               <div>
                 <label className="text-xs font-medium text-gray-400 mb-2 block">Hautton</label>
                 <div className="flex flex-wrap gap-2.5">
@@ -251,42 +258,39 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* COLUMN 2: Form & Zehen */}
-          <div className="flex flex-col gap-6">
-            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl hover:border-brand-primary/20 transition-colors h-full">
-              <h3 className="text-xs font-bold uppercase text-gray-400 mb-5 flex items-center gap-2 tracking-wider">
-                <Footprints size={14} /> {VISUAL_DETAIL_GROUPS.shape.label}
+            {/* COLUMN B: Details (Shape + Texture + Style) */}
+            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl h-full flex flex-col gap-6">
+              <h3 className="text-xs font-bold uppercase text-gray-400 mb-1 flex items-center gap-2 tracking-wider">
+                <Sliders size={14} /> Details
               </h3>
 
-              <div className="flex flex-wrap gap-2">
-                {VISUAL_DETAIL_GROUPS.shape.options.map(opt => (
-                  <button
-                    key={opt}
-                    onClick={() => toggleDetail(opt)}
-                    className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium transition-all border flex justify-between items-center ${params.visualDetails.includes(opt)
-                        ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_8px_rgba(168,85,247,0.2)]'
-                        : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300'
-                      }`}
-                  >
-                    {opt}
-                    {params.visualDetails.includes(opt) && <Check size={12} />}
-                  </button>
-                ))}
+              {/* Shape */}
+              <div>
+                <label className="text-[10px] font-bold text-brand-primary uppercase mb-3 block flex items-center gap-2 opacity-80">
+                  <Footprints size={12} /> {VISUAL_DETAIL_GROUPS.shape.label}
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {VISUAL_DETAIL_GROUPS.shape.options.map(opt => (
+                    <button
+                      key={opt}
+                      onClick={() => toggleDetail(opt)}
+                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-all border ${params.visualDetails.includes(opt)
+                          ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_8px_rgba(168,85,247,0.2)]'
+                          : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300'
+                        }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* COLUMN 3: Haut & Style */}
-          <div className="flex flex-col gap-6">
-            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl hover:border-brand-primary/20 transition-colors h-full">
-
-              {/* Texture Group */}
-              <div className="mb-6">
-                <h3 className="text-xs font-bold uppercase text-gray-400 mb-4 flex items-center gap-2 tracking-wider">
-                  <Layers size={14} /> {VISUAL_DETAIL_GROUPS.texture.label}
-                </h3>
+              {/* Texture */}
+              <div>
+                <label className="text-[10px] font-bold text-brand-primary uppercase mb-3 block flex items-center gap-2 opacity-80">
+                  <Layers size={12} /> {VISUAL_DETAIL_GROUPS.texture.label}
+                </label>
                 <div className="flex flex-wrap gap-2">
                   {VISUAL_DETAIL_GROUPS.texture.options.map(opt => (
                     <button
@@ -303,11 +307,11 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 </div>
               </div>
 
-              {/* Style Group */}
+              {/* Style */}
               <div>
-                <h3 className="text-xs font-bold uppercase text-gray-400 mb-4 flex items-center gap-2 tracking-wider">
-                  <Sparkles size={14} /> {VISUAL_DETAIL_GROUPS.style.label}
-                </h3>
+                <label className="text-[10px] font-bold text-brand-primary uppercase mb-3 block flex items-center gap-2 opacity-80">
+                  <Sparkles size={12} /> {VISUAL_DETAIL_GROUPS.style.label}
+                </label>
                 <div className="flex flex-wrap gap-2">
                   {VISUAL_DETAIL_GROUPS.style.options.map(opt => (
                     <button
@@ -324,32 +328,34 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* COLUMN 4: Szene & Preview */}
-          <div className="flex flex-col gap-6">
-
-            {/* Scene Settings (Merged with Angle) */}
-            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl hover:border-brand-primary/20 transition-colors">
+            {/* COLUMN C: Scene (Camera + Env + Light) */}
+            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl h-full">
               <h3 className="text-xs font-bold uppercase text-gray-400 mb-5 flex items-center gap-2 tracking-wider">
                 <Camera size={14} /> Szene & Kamera
               </h3>
 
-              {/* Camera Angle */}
-              <div className="mb-5">
+              {/* Camera Angle (Grid) */}
+              <div className="mb-6">
                 <label className="text-xs font-medium text-gray-400 mb-2 block">Kamerawinkel</label>
-                <Select
-                  value={params.angle.id}
-                  onChange={(e) => {
-                    const angle = CAMERA_ANGLES.find(a => a.id === e.target.value);
-                    if (angle) setParams({ ...params, angle });
-                  }}
-                  options={CAMERA_ANGLES.map(a => ({ value: a.id, label: a.label }))}
-                  className="bg-black/40 border-white/10"
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  {CAMERA_ANGLES.map(a => (
+                    <button
+                      key={a.id}
+                      onClick={() => setParams({ ...params, angle: a })}
+                      className={`p-2 rounded-lg text-xs border text-left transition-all ${params.angle.id === a.id
+                          ? 'bg-brand-primary/10 border-brand-primary text-white'
+                          : 'bg-black/20 border-white/5 text-gray-400 hover:bg-white/5'
+                        }`}
+                    >
+                      {a.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="mb-5">
+              {/* Environment */}
+              <div className="mb-6">
                 <label className="text-xs font-medium text-gray-400 mb-2 block">Umgebung</label>
                 <Select
                   value={params.scene}
@@ -359,6 +365,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 />
               </div>
 
+              {/* Lighting */}
               <div>
                 <label className="text-xs font-medium text-gray-400 mb-2 block">Beleuchtung</label>
                 <div className="flex flex-wrap gap-1.5 mb-2">
@@ -378,24 +385,27 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                   value={params.lighting}
                   onChange={(e) => setParams({ ...params, lighting: e.target.value })}
                   placeholder="Individuell..."
-                  className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-brand-primary transition-all placeholder:text-gray-600"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white mb-3 outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/50 transition-all placeholder:text-gray-600"
                 />
               </div>
             </div>
+          </div>
 
-            {/* PREVIEW AREA (Sticky) */}
+          {/* RIGHT: PREVIEW (4 Cols, Sticky) */}
+          <div className="lg:col-span-4 sticky top-6">
             <div
               ref={previewRef}
-              className="bg-brand-card rounded-2xl border border-white/5 shadow-2xl overflow-hidden sticky top-6 group"
+              className="bg-brand-card rounded-2xl border border-white/5 shadow-2xl overflow-hidden group"
             >
               <div className="p-1 bg-gradient-to-r from-brand-primary via-purple-500 to-pink-500 opacity-20 h-1"></div>
 
               {/* Result Display */}
-              <div className="aspect-[16/9] bg-black/40 relative flex items-center justify-center">
+              <div className="aspect-[16/9] bg-black/40 relative flex items-center justify-center min-h-[300px]">
                 {isGenerating ? (
                   <div className="text-center">
-                    <div className="w-10 h-10 border-3 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                    <p className="text-xs text-brand-primary font-bold animate-pulse">Generiere...</p>
+                    <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-sm text-brand-primary font-bold animate-pulse">Generiere...</p>
+                    <p className="text-[10px] text-gray-500 mt-2">Das dauert ca. 5-10 Sekunden</p>
                   </div>
                 ) : resultImage ? (
                   <>
@@ -403,54 +413,71 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                       src={resultImage}
                       alt="Generated Result"
                       onClick={() => setIsModalOpen(true)}
-                      className="w-full h-full object-cover cursor-zoom-in hover:opacity-90 transition-opacity"
+                      className="w-full h-full object-cover cursor-zoom-in hover:opacity-95 transition-opacity"
                     />
-                    <button
-                      onClick={() => setIsModalOpen(true)}
-                      className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Eye size={12} /> Zoom
-                    </button>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-6">
+                      <Button
+                        onClick={() => setIsModalOpen(true)}
+                        size="sm" variant="secondary"
+                        className="backdrop-blur-md bg-white/10 border-white/20"
+                      >
+                        <Eye size={14} className="mr-2" /> Vergrößern
+                      </Button>
+                    </div>
                   </>
                 ) : generationError ? (
-                  <div className="text-center p-4 text-red-400">
-                    <Info size={24} className="mx-auto mb-2 opacity-80" />
-                    <p className="text-xs font-bold">Fehler</p>
-                    <p className="text-[10px] opacity-80 mt-1">{generationError}</p>
+                  <div className="text-center p-6 text-red-400 max-w-[80%]">
+                    <AlertCircle size={32} className="mx-auto mb-3 opacity-80" />
+                    <p className="text-sm font-bold mb-1">Fehler bei der Erstellung</p>
+                    <p className="text-xs opacity-80">{generationError}</p>
+                    <Button
+                      onClick={handleGenerate}
+                      variant="secondary"
+                      size="sm"
+                      className="mt-4 bg-red-500/10 border-red-500/30 text-red-200 hover:bg-red-500/20"
+                    >
+                      Erneut versuchen
+                    </Button>
                   </div>
                 ) : (
-                  <div className="text-center p-6 opacity-30">
-                    <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Sparkles size={24} />
+                  <div className="text-center p-8 opacity-40">
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-primary/50">
+                      <Sparkles size={32} />
                     </div>
-                    <p className="text-xs text-gray-400">Vorschau</p>
+                    <h3 className="text-white font-medium mb-1">Bereit</h3>
+                    <p className="text-gray-500 text-xs">
+                      Klicke unten auf "Bild generieren"
+                    </p>
                   </div>
                 )}
               </div>
 
               {/* Main Action */}
-              <div className="p-4 border-t border-white/5 bg-brand-card">
+              <div className="p-5 border-t border-white/5 bg-brand-card">
                 <Button
                   fullWidth
                   size="lg"
                   variant="primary"
                   onClick={handleGenerate}
                   disabled={isGenerating}
-                  className="shadow-xl shadow-purple-900/40 relative overflow-hidden py-3 text-sm tracking-wide"
+                  className="shadow-xl shadow-purple-900/40 relative overflow-hidden py-4 text-base tracking-wide"
                 >
                   {isGenerating ? 'Wird erstellt...' : `Bild generieren`}
-                  {!isGenerating && <Wand2 size={16} className="ml-2" />}
+                  {!isGenerating && <Wand2 size={18} className="ml-2" />}
                 </Button>
-                <p className="text-[10px] text-center text-gray-600 mt-2 font-mono">Kosten: 1 Credit</p>
+                <p className="text-[10px] text-center text-gray-600 mt-3 font-mono">1 Credit pro Bild</p>
               </div>
             </div>
 
+            {/* Footer Links in Preview Column */}
+            <div className="mt-8 text-center opacity-40">
+              <p className="text-[10px] text-gray-500 flex items-center justify-center gap-2">
+                <Info size={10} /> AI Generated Content. No real persons.
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="mt-12 text-center opacity-30">
-        <p className="text-[10px] text-gray-500">AI Generated Content. No real persons.</p>
+        </div>
       </div>
 
       <ImageModal

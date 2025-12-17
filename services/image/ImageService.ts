@@ -7,7 +7,7 @@ import { StabilityAIProvider } from './providers/StabilityAIProvider';
 // Configuration / Feature Flags
 const FLAGS = {
     ENABLE_STABILITY: true, // Always on for now as per user request
-    ENABLE_FALLBACK: true,
+    ENABLE_FALLBACK: false, // DEBUG: Disable fallback to see why Stability is failing!
     MAX_RETRIES: 2,
     INITIAL_RETRY_DELAY_MS: 1000
 };

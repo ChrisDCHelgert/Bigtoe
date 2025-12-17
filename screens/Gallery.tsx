@@ -23,18 +23,13 @@ export const Gallery: React.FC<GalleryProps> = ({ images = [], onToggleFavorite,
   });
 
   return (
-    <div className="p-6 pt-8 min-h-screen">
-      <header className="mb-6 flex justify-between items-start">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <button onClick={() => navigate('/home')} className="mr-2 text-white">
-              <ArrowLeft size={20} />
-            </button>
-            <h2 className="text-2xl font-bold">Private Gallery</h2>
-            <Lock size={16} className="text-gray-500" />
-          </div>
-          <p className="text-xs text-gray-400 pl-8">Encrypted storage. Visible only to you.</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <header className="mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <h2 className="text-3xl md:text-4xl font-bold">Private Gallery</h2>
+          <Lock size={20} className="text-gray-500" />
         </div>
+        <p className="text-sm text-gray-400">Encrypted storage. Visible only to you.</p>
       </header>
 
       {/* Search */}
@@ -62,8 +57,8 @@ export const Gallery: React.FC<GalleryProps> = ({ images = [], onToggleFavorite,
         ))}
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-2 gap-4 pb-20">
+      {/* Grid: 2-col mobile, 3-col tablet, 4-col laptop, 5-col desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-8">
         <div
           onClick={() => navigate('/generator')}
           className="aspect-[4/5] bg-brand-card border border-white/10 rounded-xl flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:border-brand-primary/50 transition-colors"

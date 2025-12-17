@@ -104,7 +104,7 @@ const App: React.FC = () => {
 
   return (
     <Router>
-      <Layout>
+      <Layout user={user}>
         <Routes>
           <Route path="/" element={<Onboarding />} />
           <Route path="/home" element={<Home user={user} />} />

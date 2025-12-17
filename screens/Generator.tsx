@@ -136,7 +136,20 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
     } catch (error: any) {
       console.error("[Generator] Failed:", error);
-      setErrorMessage(error.message || "Unbekannter Fehler.");
+
+      let friendlyMessage = "Ein unbekannter Fehler ist aufgetreten.";
+
+      if (error.code === 'POLICY_VIOLATION') {
+        friendlyMessage = "Das Motiv entspricht nicht unseren Richtlinien. Bitte entferne explizite Begriffe.";
+      } else if (error.code === 'TIMEOUT' || error.message?.includes('timeout')) {
+        friendlyMessage = "Der Server antwortet nicht rechtzeitig. Bitte versuche es erneut.";
+      } else if (error.code === 'SERVER_ERROR') {
+        friendlyMessage = "Unsere Server sind derzeit stark ausgelastet.";
+      } else if (error.message) {
+        friendlyMessage = error.message;
+      }
+
+      setErrorMessage(friendlyMessage);
       setStatus('error');
     }
   };

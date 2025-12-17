@@ -38,6 +38,21 @@ export interface ProviderCapabilities {
     requiresAuth: boolean;
 }
 
+
+export type GenerationErrorCode = 'POLICY_VIOLATION' | 'TIMEOUT' | 'RATE_LIMIT' | 'SERVER_ERROR' | 'UNKNOWN';
+
+export class GenerationError extends Error {
+    constructor(
+        public message: string,
+        public code: GenerationErrorCode,
+        public providerId?: string,
+        public retryable: boolean = false
+    ) {
+        super(message);
+        this.name = 'GenerationError';
+    }
+}
+
 export interface ImageProvider {
     readonly id: string;
 

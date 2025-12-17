@@ -1,17 +1,16 @@
 // services/image/ImageService.ts
 
-import { ImageProvider, GenerationRequest, GenerationResult, ValidationResult } from './types';
+import { ImageProvider, GenerationRequest, GenerationResult, GenerationError, GenerationErrorCode } from './types';
 import { PollinationsProvider } from './providers/PollinationsProvider';
 import { VertexProvider } from './providers/VertexProvider';
 
 // Configuration / Feature Flags
-// Read from environment variables with safe defaults for Legacy Mode
 const FLAGS = {
-    // LEGACY MODE: Defaults to false for internal testing without Vertex/Stripe
     ENABLE_VERTEX: import.meta.env.VITE_ENABLE_VERTEX === 'true' || false,
     VERTEX_ROLLOUT_PERCENT: parseInt(import.meta.env.VITE_VERTEX_ROLLOUT || '0'),
-    COST_GUARDRAIL_MAX_DAILY: parseFloat(import.meta.env.VITE_MAX_DAILY_COST || '10.00'),
-    ENABLE_FALLBACK: import.meta.env.VITE_ENABLE_FALLBACK !== 'false' // Default true
+    ENABLE_FALLBACK: import.meta.env.VITE_ENABLE_FALLBACK !== 'false',
+    MAX_RETRIES: 2,
+    INITIAL_RETRY_DELAY_MS: 1000
 };
 
 interface TelemetryEvent {
@@ -31,42 +30,64 @@ export class ImageService {
     constructor() {
         this.primary = new VertexProvider();
         this.fallback = new PollinationsProvider();
-
         console.log(`[ImageService] Initialized - Legacy Mode: ${!FLAGS.ENABLE_VERTEX}`);
     }
 
-    /**
-     * Router Logic: Decides which provider to use based on Policy & Availability
-     */
     private getProvider(userIsPremium: boolean): ImageProvider {
-        // 1. Hard Fallback if feature disabled (LEGACY MODE)
-        if (!FLAGS.ENABLE_VERTEX) {
-            console.log('[ImageService] Running in Legacy Mode - using Pollinations');
-            return this.fallback;
-        }
-
-        // 2. Entitlement Check (Vertex is expensive, only for Pro)
-        if (userIsPremium && FLAGS.VERTEX_ROLLOUT_PERCENT > 0) {
-            return this.primary;
-        }
-
-        // 3. Default for Free Users
+        if (!FLAGS.ENABLE_VERTEX) return this.fallback;
+        if (userIsPremium && FLAGS.VERTEX_ROLLOUT_PERCENT > 0) return this.primary;
         return this.fallback;
     }
 
+    private async sleep(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     /**
-     * Main Entry Point with Fallback Support
+     * Executes generation with Automatic Retries (Exponential Backoff)
      */
+    private async executeWithRetry(
+        provider: ImageProvider,
+        request: GenerationRequest
+    ): Promise<GenerationResult> {
+        let attempt = 0;
+        let lastError: any;
+
+        while (attempt <= FLAGS.MAX_RETRIES) {
+            try {
+                return await provider.generateImage(request);
+            } catch (error: any) {
+                lastError = error;
+                const isRetryable = error.retryable ||
+                    (error.message && (error.message.includes('timeout') || error.message.includes('50')));
+
+                // Never retry Policy Violations
+                if (error instanceof GenerationError && error.code === 'POLICY_VIOLATION') {
+                    throw error;
+                }
+
+                if (!isRetryable || attempt === FLAGS.MAX_RETRIES) {
+                    throw error;
+                }
+
+                attempt++;
+                const delay = FLAGS.INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt - 1);
+                console.log(`[ImageService] Retry ${attempt}/${FLAGS.MAX_RETRIES} for ${provider.id} in ${delay}ms...`);
+                await this.sleep(delay);
+            }
+        }
+        throw lastError;
+    }
+
     async generateImage(request: GenerationRequest, userIsPremium: boolean): Promise<GenerationResult> {
         const startTime = Date.now();
         const provider = this.getProvider(userIsPremium);
 
-        console.log(`[ImageService] Selected Provider: ${provider.id} for User (Premium: ${userIsPremium})`);
+        console.log(`[ImageService] Selected Provider: ${provider.id} (Premium: ${userIsPremium})`);
 
-        // 1. Validate (Provider Specific)
+        // 1. Validation check
         const validation = await provider.validatePrompt(request.prompt);
         if (!validation.allowed) {
-            // COMPLIANCE FIRST: Policy violations are NEVER retried with fallback
             this.logTelemetry({
                 timestamp: new Date().toISOString(),
                 provider: provider.id,
@@ -74,106 +95,89 @@ export class ImageService {
                 errorReason: validation.reason,
                 failureType: 'policy'
             });
-            throw new Error(`Policy Violation: ${validation.reason}`);
+            throw new GenerationError(
+                validation.reason || "Policy Violation",
+                'POLICY_VIOLATION',
+                provider.id,
+                false
+            );
         }
 
-        // 2. Generate with fallback support
+        // 2. Execution with Fallback Logic
         try {
-            const result = await provider.generateImage(request);
-            const latencyMs = Date.now() - startTime;
+            // Try Primary
+            const result = await this.executeWithRetry(provider, request);
 
-            // 3. Success Telemetry
             this.logTelemetry({
                 timestamp: new Date().toISOString(),
                 provider: result.provider,
                 status: 'success',
-                latencyMs,
+                latencyMs: Date.now() - startTime,
                 cost: result.costEstimate
             });
-
             return result;
+
         } catch (error: any) {
-            const latencyMs = Date.now() - startTime;
-            console.error(`[ImageService] Provider ${provider.id} failed:`, error);
+            // If error is Policy Violation, do NOT fallback
+            const isPolicy = (error instanceof GenerationError && error.code === 'POLICY_VIOLATION')
+                || error.message?.includes('Policy')
+                || error.message?.includes('Safety');
 
-            // Determine if this is a technical failure (retriable) or policy (not retriable)
-            const isPolicyError = error.message?.includes('Policy') || error.message?.includes('Safety');
-
-            if (isPolicyError) {
-                // Policy error: Do NOT fallback
+            if (isPolicy) {
                 this.logTelemetry({
                     timestamp: new Date().toISOString(),
                     provider: provider.id,
                     status: 'error',
-                    latencyMs,
-                    errorReason: error.message,
-                    failureType: 'policy'
+                    failureType: 'policy',
+                    errorReason: error.message
                 });
-                throw error;
+                // Ensure it is typed correctly for UI
+                throw new GenerationError(error.message, 'POLICY_VIOLATION', provider.id, false);
             }
 
-            // Technical error: Try fallback if enabled and we're not already on fallback
+            // Technical Failure -> Attempt Fallback
             if (FLAGS.ENABLE_FALLBACK && provider.id !== this.fallback.id) {
-                console.log(`[ImageService] Technical failure, attempting fallback to ${this.fallback.id}`);
-
-                this.logTelemetry({
-                    timestamp: new Date().toISOString(),
-                    provider: provider.id,
-                    status: 'error',
-                    latencyMs,
-                    errorReason: error.message,
-                    failureType: 'technical'
-                });
+                console.warn(`[ImageService] Primary failed, attempting fallback to ${this.fallback.id}`);
 
                 try {
-                    const fallbackResult = await this.fallback.generateImage(request);
-                    const fallbackLatency = Date.now() - startTime;
+                    const fallbackResult = await this.executeWithRetry(this.fallback, request);
 
                     this.logTelemetry({
                         timestamp: new Date().toISOString(),
                         provider: this.fallback.id,
                         status: 'fallback',
-                        latencyMs: fallbackLatency,
+                        latencyMs: Date.now() - startTime,
                         cost: fallbackResult.costEstimate
                     });
-
                     return fallbackResult;
-                } catch (fallbackError) {
-                    console.error(`[ImageService] Fallback also failed:`, fallbackError);
-                    this.logTelemetry({
-                        timestamp: new Date().toISOString(),
-                        provider: this.fallback.id,
-                        status: 'error',
-                        latencyMs: Date.now() - startTime,
-                        errorReason: (fallbackError as Error).message,
-                        failureType: 'technical'
-                    });
-                    throw fallbackError;
+
+                } catch (fallbackError: any) {
+                    console.error("[ImageService] Fallback also failed.");
+                    throw new GenerationError(
+                        fallbackError.message || "All providers failed",
+                        'SERVER_ERROR',
+                        this.fallback.id,
+                        false
+                    );
                 }
             }
 
-            // No fallback available or disabled
-            this.logTelemetry({
-                timestamp: new Date().toISOString(),
-                provider: provider.id,
-                status: 'error',
-                latencyMs,
-                errorReason: error.message,
-                failureType: 'technical'
-            });
-            throw error;
+            // No Fallback available
+            throw new GenerationError(
+                error.message || "Generation failed",
+                'SERVER_ERROR',
+                provider.id,
+                false
+            );
         }
     }
 
     private logTelemetry(event: TelemetryEvent) {
-        // Enhanced Telemetry Logger
-        // In production, this would send to Google Analytics, Cloud Logging, or similar
-        console.log(`[Telemetry] ${JSON.stringify(event)}`);
-
-        // TODO: Send to analytics backend
-        // analytics.track('image_generation', event);
+        // In prod: send to backend
+        if (import.meta.env.DEV) {
+            console.debug(`[Telemetry]`, event);
+        }
     }
 }
 
-// Singleton Instance
 export const imageService = new ImageService();

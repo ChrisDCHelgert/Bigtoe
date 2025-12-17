@@ -13,7 +13,9 @@ import {
   SCENE_OPTIONS,
   LIGHTING_CHIPS,
   FOOT_SIDES,
-  STYLE_PRESETS
+  STYLE_PRESETS,
+  STYLE_VIBES,
+  ACTION_MOMENTS
 } from '../constants';
 import { UserProfile } from '../types';
 import { StylePresetSelector } from '../components/StylePresetSelector';
@@ -48,6 +50,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
     visualDetails: [],
     scene: SCENE_OPTIONS[0],
     lighting: LIGHTING_CHIPS[0],
+    styleVibe: '',
+    actionMoment: '',
     quality: 'standard'
   });
 
@@ -237,14 +241,14 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
           </div>
         </div>
 
-        {/* MAIN GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* MAIN GRID - FIXED HEIGHT & SYMMETRY (Studio Layout) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start h-[calc(100vh-220px)] min-h-[700px]">
 
           {/* LEFT: CONTROLS (8 Cols) */}
-          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
 
             {/* COLUMN A: Basics */}
-            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl h-full">
+            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl overflow-y-auto custom-scrollbar h-full">
               <h3 className="text-xs font-bold uppercase text-gray-400 mb-5 flex items-center gap-2 tracking-wider">
                 <Settings size={14} /> Basis-Einstellungen
               </h3>
@@ -351,8 +355,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
               </div>
             </div>
 
-            {/* COLUMN B: Details */}
-            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl h-full flex flex-col gap-6">
+            {/* COLUMN B: Details & Vibe */}
+            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl overflow-y-auto custom-scrollbar h-full flex flex-col gap-6">
               <h3 className="text-xs font-bold uppercase text-gray-400 mb-1 flex items-center gap-2 tracking-wider">
                 <Sliders size={14} /> Details
               </h3>
@@ -419,10 +423,31 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                   ))}
                 </div>
               </div>
+              {/* VIBE (New) */}
+              <div>
+                <label className="text-[10px] font-bold text-brand-primary uppercase mb-3 block flex items-center gap-2 opacity-80">
+                  <Sparkles size={12} /> Vibe / Atmosphäre
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {STYLE_VIBES.map(v => (
+                    <button
+                      key={v.id}
+                      onClick={() => setParams(p => ({ ...p, styleVibe: p.styleVibe === v.id ? '' : v.id }))}
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wide uppercase transition-all border ${params.styleVibe === v.id
+                        ? 'bg-purple-900/40 border-purple-500 text-purple-200 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
+                        : 'bg-black/40 border-white/5 text-gray-500 hover:text-gray-300'
+                        }`}
+                      title={v.diff}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* COLUMN C: Scene */}
-            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl h-full">
+            {/* COLUMN C: Scene & Action */}
+            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl overflow-y-auto custom-scrollbar h-full">
               <h3 className="text-xs font-bold uppercase text-gray-400 mb-5 flex items-center gap-2 tracking-wider">
                 <Camera size={14} /> Szene & Kamera
               </h3>
@@ -443,6 +468,17 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* ACTION (New) */}
+              <div className="mb-6">
+                <label className="text-xs font-medium text-gray-400 mb-2 block">Action / Moment (Optional)</label>
+                <Select
+                  value={params.actionMoment || ''}
+                  onChange={(e) => setParams({ ...params, actionMoment: e.target.value })}
+                  options={[{ value: '', label: 'Keine Aktion (Statisch)' }, ...ACTION_MOMENTS.map(a => ({ value: a.id, label: a.label }))]}
+                  className="bg-black/40 border-white/10"
+                />
               </div>
 
               <div className="mb-6">
@@ -480,11 +516,11 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
             </div>
           </div>
 
-          {/* RIGHT: PREVIEW (4 Cols, Sticky) */}
-          <div className="lg:col-span-4 sticky top-6">
+          {/* RIGHT: PREVIEW (4 Cols, Fixed Height) */}
+          <div className="lg:col-span-4 h-full flex flex-col">
             <div
               ref={previewRef}
-              className="bg-brand-card rounded-2xl border border-white/5 shadow-2xl overflow-hidden group min-h-[400px] flex flex-col"
+              className="bg-brand-card rounded-2xl border border-white/5 shadow-2xl overflow-hidden group flex-1 flex flex-col relative"
             >
               <div className="p-1 bg-gradient-to-r from-brand-primary via-purple-500 to-pink-500 opacity-20 h-1"></div>
 

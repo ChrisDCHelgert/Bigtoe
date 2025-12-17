@@ -130,17 +130,38 @@ export const CAMERA_ANGLES = [
 
 export const SCENE_OPTIONS = [
   'Studio Weiß',
-  'Studio Schwarz', // requested
+  'Studio Schwarz',
   'Schlafzimmer',
-  'Hotelzimmer', // requested
-  'Badezimmer / Dusche', // requested
+  'Hotelzimmer',
+  'Badezimmer / Dusche',
   'Minimal / Schwarz',
   'Outdoor Beton',
-  'Outdoor Sonnenlicht', // "Outdoor Warm" 
-  'Auto Innenraum', // requested
+  'Outdoor Sonnenlicht',
+  'Auto Innenraum',
   'Outdoor Sand',
   'Outdoor Wiese'
 ];
+
+// NEW: Vibe / Target Groups
+export const STYLE_VIBES = [
+  { id: 'esoteric', label: 'Esoteric / Ritual', diff: 'incense, mystical atmosphere, warm candlelight, spiritual vibe' },
+  { id: 'tribal', label: 'Tribal / Indigenous', diff: 'henna tattoos, natural ornaments, earthy tones, raw aesthetic' },
+  { id: 'punk', label: 'Punk / Hardcore', diff: 'contrast lighting, edgy, tattoos, dark mood, rebellious' },
+  { id: 'dark', label: 'Dark Aesthetic', diff: 'low key lighting, deep shadows, mysterious, goth aesthetic' },
+  { id: 'luxury', label: 'Luxury / High-End', diff: 'clean editorial look, expensive atmosphere, perfect grooming, softbox lighting' },
+  { id: 'natural', label: 'Natural / Raw', diff: 'ungroomed, authentic skin texture, daylight, imperfect realism, raw photo' }
+];
+
+// NEW: Actions / Moments
+export const ACTION_MOMENTS = [
+  { id: 'painting', label: 'Being Painted', prompt: 'toenails being painted, pedicure session, application of nail polish' },
+  { id: 'washing', label: 'Being Washed', prompt: 'foot being washed, soap bubbles, wet skin, hands cleaning foot' },
+  { id: 'oiling', label: 'Being Oiled', prompt: 'applying oil to feet, shiny oily skin, hands massaging oil' },
+  { id: 'touching', label: 'Being Touched', prompt: 'hand gently touching foot, contact, interaction' },
+  { id: 'stretch', label: 'Stretch / Pose', prompt: 'tensed foot arch, toes stretching, dynamic pose, muscle tension' },
+  { id: 'relax', label: 'Relaxed / Aftercare', prompt: 'relaxed feet on towel, resting, soft bed sheets, cozy atmosphere' }
+];
+
 
 export const LIGHTING_CHIPS = [
   'Softbox Studio',

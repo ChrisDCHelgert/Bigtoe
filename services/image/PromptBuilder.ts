@@ -1,5 +1,5 @@
 
-import { SKIN_TONE_PRESETS, CAMERA_ANGLES, SCENE_OPTIONS, VISUAL_DETAILS } from '../../constants';
+import { SKIN_TONE_PRESETS, CAMERA_ANGLES, SCENE_OPTIONS, VISUAL_DETAILS, STYLE_VIBES, ACTION_MOMENTS } from '../../constants';
 
 export interface PromptSettings {
     gender: 'female' | 'male' | 'diverse';
@@ -10,6 +10,8 @@ export interface PromptSettings {
     visualDetails: string[];
     scene: string;
     lighting: string;
+    styleVibe?: string; // ID of STYLE_VIBES
+    actionMoment?: string; // ID of ACTION_MOMENTS
     quality?: 'standard' | 'high' | 'studio';
 }
 
@@ -108,7 +110,18 @@ export const PromptBuilder = {
         segments.push(`Scene: ${translateScene(settings.scene)}`);
         segments.push(`Lighting: ${translateLighting(settings.lighting)}`);
 
-        // 6. QUALITY BOOSTERS
+        // 6. STYLE VIBE & ACTION (New)
+        if (settings.styleVibe) {
+            const vibe = STYLE_VIBES.find(v => v.id === settings.styleVibe);
+            if (vibe) segments.push(vibe.diff);
+        }
+
+        if (settings.actionMoment) {
+            const action = ACTION_MOMENTS.find(a => a.id === settings.actionMoment);
+            if (action) segments.push(action.prompt);
+        }
+
+        // 7. QUALITY BOOSTERS
         segments.push('8k resolution, highly detailed skin texture, realistic toes, masterpiece, dslr, macro photography, raw output');
 
         return segments.join(', ');
@@ -206,6 +219,18 @@ export const PromptBuilder = {
 
         // Deduping
         const uniqueNegs = Array.from(new Set(negs.join(', ').split(',').map(s => s.trim()).filter(s => s.length > 0)));
+
+        // 5. Action Constraints (Strict Exclusion of Interactors unless requested)
+        // If action implies hands (Washing, Painting, Oiling, Touching), we allow them.
+        // Otherwise, we strictly forbid random hands appearing.
+        const handsAllowed = ['painting', 'washing', 'oiling', 'touching'].includes(settings.actionMoment || '');
+
+        if (!handsAllowed) {
+            // Strict NO HANDS
+            // We append to result to ensure it's at the end or begin? Order matters less for negatives usually, but we append.
+            uniqueNegs.push('hands, fingers, palms, human hands, holding foot, touching foot, people in background');
+        }
+
         return uniqueNegs.join(', ');
     },
 

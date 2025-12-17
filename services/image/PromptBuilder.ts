@@ -1,8 +1,9 @@
 
-import { SKIN_TONE_PRESETS, CAMERA_ANGLES, SCENE_OPTIONS, VISUAL_DETAILS, STYLE_VIBES, ACTION_MOMENTS } from '../../constants';
+import { SKIN_TONE_PRESETS, CAMERA_ANGLES, SCENE_OPTIONS, VISUAL_DETAILS, STYLE_VIBES, ACTION_MOMENTS, AGE_OPTIONS } from '../../constants';
 
 export interface PromptSettings {
     gender: 'female' | 'male' | 'diverse';
+    age: string; // 'young', 'adult', 'mature', 'senior'
     side: string; // 'left', 'right', 'both'
     footSize: number;
     skinTone: { value: string };
@@ -129,15 +130,26 @@ export const PromptBuilder = {
             segments.push(featurePrompts.join(', '));
         }
 
-        // 5. SCENE & LIGHTING
+        // 5. JEWELRY & BONDAGE (Boosted Priority for SDXL)
+        // Moved up to ensure they aren't cut off or overshadowed
+        if (settings.jewelry?.enabled) {
+            // Stronger weight (1.6) + Explicit "wearing"
+            segments.push(`(wearing ${settings.jewelry.type}:1.6), (jewelry on feet:1.4), ${settings.jewelry.materials} ${settings.jewelry.type}, ${settings.jewelry.style} style`);
+        }
+
+        if (settings.bondage?.enabled) {
+            // Replaced "shibari" with more direct "rope" terms for SDXL adherence
+            const material = settings.bondage.material.toLowerCase().includes('seil') ? 'rope' : 'leather straps';
+            segments.push(`(foot bondage:1.7), (bound feet:1.6), (${material} binding:1.5), ${settings.bondage.color} ${material}, ${settings.bondage.level === 'light' ? 'simple binding' : 'complex intricate binding'}`);
+        }
+
+        // 6. SCENE & LIGHTING
         segments.push(`Scene: ${translateScene(settings.scene)}`);
         segments.push(`Lighting: ${translateLighting(settings.lighting)}`);
 
-        // 6. STYLE VIBE & ACTION (New)
-        if (settings.styleVibe) {
-            const vibe = STYLE_VIBES.find(v => v.id === settings.styleVibe);
-            if (vibe) segments.push(vibe.diff);
-        }
+        // 8. AGE (New)
+        const age = AGE_OPTIONS.find(a => a.id === settings.age) || AGE_OPTIONS[0];
+        segments.push(`(${age.prompt}:1.4)`);
 
         // 7. NAILS (V3) - Explicit Color Logic
         if (settings.nails?.enabled) {
@@ -161,15 +173,8 @@ export const PromptBuilder = {
             // Explicit Negative handled in buildNegative
         }
 
-        // 9. JEWELRY (V3)
-        if (settings.jewelry?.enabled) {
-            segments.push(`(wearing ${settings.jewelry.type}:1.4), ${settings.jewelry.materials} material, ${settings.jewelry.style} style jewelry`);
-        }
 
-        // 10. BONDAGE (V3)
-        if (settings.bondage?.enabled) {
-            segments.push(`(shibari foot bondage:1.3), ${settings.bondage.level} restraint, ${settings.bondage.color} ${settings.bondage.material} ropes`);
-        }
+        // (Deleted old Jewelry/Bondage block at end to avoid duplicates)
 
         if (settings.actionMoment) {
             const action = ACTION_MOMENTS.find(a => a.id === settings.actionMoment);
@@ -193,6 +198,7 @@ export const PromptBuilder = {
         negs.push('extra toes, six toes, duplicated toes, malformed foot, extra foot, mirrored anatomy'); // Req V4
         negs.push('missing toes, fused toes, mutated toes, more than 5 toes, less than 5 toes');
         negs.push('double big toe, wrong toe order, impossible anatomy, twisted toes, deformed shape, unnatural arch, bad proportions');
+        negs.push('child, underage, kid, minor, baby, toddler'); // STRICT SAFETY
         negs.push('claws, animal feet, paw');
 
         // 2. Strict Foot Count Logic

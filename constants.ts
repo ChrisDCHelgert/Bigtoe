@@ -152,6 +152,14 @@ export const STYLE_VIBES = [
   { id: 'natural', label: 'Natural / Raw', diff: 'ungroomed, authentic skin texture, daylight, imperfect realism, raw photo' }
 ];
 
+// Age Options
+export const AGE_OPTIONS = [
+  { id: 'young', label: 'Jung (18-24)', prompt: 'young adult, 20 years old, fresh skin' },
+  { id: 'adult', label: 'Erwachsen (25-34)', prompt: 'adult female, 30 years old, defined features' },
+  { id: 'mature', label: 'Reif (35-49)', prompt: 'mature woman, 40 years old, mature skin texture, milf' },
+  { id: 'senior', label: 'Senior (50+)', prompt: 'senior female, 60 years old, aged skin, wrinkles' }
+];
+
 // Tattoos
 export const TATTOO_OPTIONS = {
   motifs: ['Tribal', 'Mandala / Ornamental', 'Minimal Line', 'Floral', 'Symbol / Rune', 'Skull / Dark'],

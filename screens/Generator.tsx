@@ -16,6 +16,7 @@ import {
   STYLE_PRESETS,
   STYLE_VIBES,
   ACTION_MOMENTS,
+  AGE_OPTIONS,
   TATTOO_OPTIONS,
   JEWELRY_OPTIONS,
   BONDAGE_OPTIONS,
@@ -47,6 +48,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
   const [params, setParams] = useState<PromptSettings>({
     gender: 'female',
+    age: 'young', // Default 18-24
     side: 'both',
     footSize: 38,
     skinTone: SKIN_TONE_PRESETS[1],

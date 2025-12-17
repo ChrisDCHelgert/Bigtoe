@@ -1,9 +1,9 @@
 // screens/Plans.tsx
-// Clean pricing grid with payment modal
+// Fetish/Creator Pricing - 3 Cards, Single CTA
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Check, Crown, Sparkles, Shield } from 'lucide-react';
+import { Zap, Check, Crown, Sparkles, Shield, Star } from 'lucide-react';
 import { Button } from '../components/Button';
 import { PaymentModal } from '../components/PaymentModal';
 import { UserProfile } from '../types';
@@ -15,29 +15,29 @@ interface PlansProps {
 const PLANS = [
     {
         id: 'basic',
-        name: 'Basic',
+        name: 'Starter',
         price: '€9.99',
-        credits: 50,
+        credits: 100,
         features: [
-            '50 Generierungen / Monat',
-            'Standard Qualität (1024x1024)',
-            'Galerie-Speicherung',
-            'Email Support'
+            '50 Bilder / Monat',
+            'Standard Qualität',
+            'Basis Fetisch-Stile',
+            'Privat-Galerie'
         ],
         icon: Zap,
         color: 'from-blue-500 to-cyan-500'
     },
     {
         id: 'pro',
-        name: 'Pro',
+        name: 'Creator',
         price: '€19.99',
-        credits: 200,
+        credits: 500,
         features: [
-            '200 Generierungen / Monat',
-            'High Quality (1280x720)',
-            'Priorität-Verarbeitung',
-            'Extended Gallery',
-            'Advanced Visual Details'
+            '200 Bilder / Monat',
+            'Hohe Auflösung (HD)',
+            'Alle Fetisch-Presets',
+            'Priorisierte Generierung',
+            'Keine Wasserzeichen'
         ],
         icon: Sparkles,
         color: 'from-purple-500 to-pink-500',
@@ -45,16 +45,15 @@ const PLANS = [
     },
     {
         id: 'premium',
-        name: 'Premium',
+        name: 'Elite',
         price: '€39.99',
-        credits: 'Unlimited',
+        credits: 1500,
         features: [
-            'Unbegrenzte Generierungen',
-            'Ultra Quality (2048x1536)',
-            'Vertex AI Provider',
-            'API-Zugang',
-            'Priorität-Support',
-            'Jederzeit kündbar'
+            'Unbegrenzt* Generieren',
+            '4K Ultra-HD Qualität',
+            'Exklusive "Deep Fetish" Modelle',
+            'Kommerzielle Lizenz',
+            'VIP Support'
         ],
         icon: Crown,
         color: 'from-yellow-500 to-orange-500'
@@ -63,130 +62,104 @@ const PLANS = [
 
 export const Plans: React.FC<PlansProps> = ({ user }) => {
     const navigate = useNavigate();
-    const [selectedPlan, setSelectedPlan] = useState<typeof PLANS[0] | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState<typeof PLANS[0]>(PLANS[1]); // Default to Pro
     const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-    const handleSelectPlan = (plan: typeof PLANS[0]) => {
-        setSelectedPlan(plan);
-        setShowPaymentModal(true);
-    };
-
     const handleConfirmPayment = async (paymentMethod: string) => {
-        console.log('Payment confirmed:', selectedPlan?.id, paymentMethod);
-        // TODO: Integrate Stripe checkout
+        // Mock payment
         await new Promise(resolve => setTimeout(resolve, 1500));
-        alert(`Plan ${selectedPlan?.name} abgeschlossen! (Demo)`);
+        alert(`Upgrade erfolgreich! Willkommen im ${selectedPlan.name} Plan.`);
         setShowPaymentModal(false);
         navigate('/home');
     };
 
     return (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-24">
 
             {/* Header */}
             <div className="text-center mb-12">
-                <h1 className="text-4xl md:text-5xl font-bold mb-4">Choose Your Plan</h1>
+                <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">Wähle dein Level</h1>
                 <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-                    Professional AI image generation for creators.
-                    Select the plan that fits your creative needs.
+                    Professionelle KI-Tools für Fetisch-Creator und Künstler.
+                    Anonym. Diskret. Jederzeit kündbar.
                 </p>
             </div>
 
             {/* Pricing Grid - 3 Columns */}
-            <div className="grid md:grid-cols-3 gap-6 mb-12">
+            <div className="grid md:grid-cols-3 gap-6 mb-12 items-stretch">
                 {PLANS.map((plan) => {
+                    const isSelected = selectedPlan.id === plan.id;
                     const Icon = plan.icon;
-                    const isCurrentPlan = user.plan === plan.name;
 
                     return (
                         <div
                             key={plan.id}
-                            className={`relative rounded-2xl border-2 transition-all ${plan.recommended
-                                ? 'border-brand-primary scale-105 shadow-2xl shadow-brand-primary/20'
-                                : 'border-white/10 hover:border-white/20'
-                                } bg-brand-card p-6`}
+                            onClick={() => setSelectedPlan(plan)}
+                            className={`relative rounded-3xl border-2 transition-all p-6 cursor-pointer flex flex-col
+                                ${isSelected 
+                                    ? 'border-brand-primary bg-brand-card shadow-[0_0_30px_rgba(168,85,247,0.15)] transform scale-[1.02] z-10' 
+                                    : 'border-white/5 bg-brand-card/50 hover:bg-brand-card hover:border-white/10 opacity-80 hover:opacity-100'}
+                            `}
                         >
                             {/* Recommended Badge */}
                             {plan.recommended && (
                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                                    <span className="bg-brand-primary text-white px-4 py-1 rounded-full text-xs font-bold uppercase">
-                                        ⭐ Recommended
+                                    <span className="bg-brand-primary text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-lg">
+                                        <Star size={10} fill="currentColor" /> Empfohlen
                                     </span>
                                 </div>
                             )}
 
-                            {/* Icon */}
-                            <div className={`w-16 h-16 rounded-full bg-gradient-to-r ${plan.color} flex items-center justify-center mb-4`}>
-                                <Icon size={32} className="text-white" />
-                            </div>
-
-                            {/* Plan Name */}
-                            <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-
-                            {/* Price */}
-                            <div className="mb-6">
-                                <span className="text-4xl font-bold">{plan.price}</span>
-                                <span className="text-gray-400 text-sm ml-2">/month</span>
-                            </div>
-
-                            {/* Credits */}
-                            <div className="mb-6 p-3 bg-brand-primary/10 rounded-lg border border-brand-primary/20">
-                                <div className="flex items-center gap-2 text-brand-primary font-bold">
-                                    <Zap size={20} fill="currentColor" />
-                                    <span>{typeof plan.credits === 'number' ? `${plan.credits} Credits` : plan.credits}</span>
+                            {/* Header */}
+                            <div className="mb-6 text-center">
+                                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${plan.color} flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+                                    <Icon size={28} className="text-white" />
+                                </div>
+                                <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
+                                <div className="flex justify-center items-baseline gap-1">
+                                    <span className="text-3xl font-bold">{plan.price}</span>
+                                    <span className="text-sm text-gray-500">/ Mon</span>
                                 </div>
                             </div>
 
                             {/* Features */}
-                            <ul className="space-y-3 mb-8">
+                            <ul className="space-y-3 mb-8 flex-1">
                                 {plan.features.map((feature, idx) => (
-                                    <li key={idx} className="flex items-start gap-2 text-sm">
-                                        <Check size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                                        <span className="text-gray-300">{feature}</span>
+                                    <li key={idx} className="flex items-start gap-3 text-sm">
+                                        <div className={`mt-0.5 p-0.5 rounded-full ${isSelected ? 'bg-brand-primary/20 text-brand-primary' : 'bg-white/10 text-gray-500'}`}>
+                                            <Check size={12} strokeWidth={3} />
+                                        </div>
+                                        <span className={isSelected ? 'text-gray-200' : 'text-gray-400'}>{feature}</span>
                                     </li>
                                 ))}
                             </ul>
 
-                            {/* CTA Button */}
-                            {isCurrentPlan ? (
-                                <Button variant="secondary" fullWidth disabled>
-                                    Current Plan
-                                </Button>
-                            ) : (
-                                <Button
-                                    variant={plan.recommended ? 'primary' : 'secondary'}
-                                    fullWidth
-                                    onClick={() => handleSelectPlan(plan)}
-                                    className={plan.recommended ? 'shadow-xl shadow-purple-900/40' : ''}
-                                >
-                                    Select Plan
-                                </Button>
-                            )}
+                            {/* Selection Indicator */}
+                            <div className={`w-full py-3 rounded-xl text-center text-sm font-bold transition-all
+                                ${isSelected ? 'bg-brand-primary/10 text-brand-primary border border-brand-primary/50' : 'bg-black/20 text-gray-500 border border-white/5'}
+                            `}>
+                                {isSelected ? 'Ausgewählt' : 'Auswählen'}
+                            </div>
                         </div>
                     );
                 })}
             </div>
 
-            {/* Trust Signals */}
-            <div className="text-center space-y-4">
-                <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
-                    <div className="flex items-center gap-2">
-                        <Shield size={16} className="text-green-500" />
-                        <span>Privacy Focused</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Shield size={16} className="text-green-500" />
-                        <span>Secure Stripe Payment</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Shield size={16} className="text-green-500" />
-                        <span>Cancel Anytime</span>
-                    </div>
+            {/* Primary CTA (Sticky Bottom on Mobile or just centered) */}
+            <div className="fixed bottom-6 left-0 right-0 px-4 md:static md:px-0 md:mt-12 flex justify-center z-50 pointer-events-none md:pointer-events-auto">
+                <div className="bg-brand-card/90 backdrop-blur-xl border border-white/10 p-4 rounded-2xl shadow-2xl md:shadow-none md:bg-transparent md:border-none md:p-0 pointer-events-auto max-w-md w-full md:max-w-none md:w-auto">
+                    <Button
+                        size="lg"
+                        variant="primary"
+                        onClick={() => setShowPaymentModal(true)}
+                        className="w-full md:w-auto md:px-24 py-5 text-lg font-bold shadow-xl shadow-purple-900/40 hover:scale-105 transition-transform"
+                    >
+                        Jetzt upgraden auf {selectedPlan.name}
+                    </Button>
+                    <p className="text-xs text-center text-gray-500 mt-3 md:text-gray-400">
+                        Sichere Zahlung via Stripe. Jederzeit kündbar.
+                    </p>
                 </div>
-                <p className="text-xs text-gray-500">
-                    All prices incl. VAT. Credits do not expire.
-                    <button className="underline ml-1" onClick={() => navigate('/support')}>Need help?</button>
-                </p>
             </div>
 
             {/* Payment Modal */}
@@ -196,6 +169,7 @@ export const Plans: React.FC<PlansProps> = ({ user }) => {
                     onClose={() => setShowPaymentModal(false)}
                     selectedPlan={selectedPlan}
                     onConfirm={handleConfirmPayment}
+                    // plan={selectedPlan} // Ensure prop name matches (selectedPlan vs plan)
                 />
             )}
         </div>

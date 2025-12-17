@@ -11,11 +11,12 @@ import { Credits } from './screens/Credits';
 import { Impressum } from './screens/legal/Impressum';
 import { Datenschutz } from './screens/legal/Datenschutz';
 import { AGB } from './screens/legal/AGB';
-
 import { CookieSettings } from './screens/legal/CookieSettings';
 import { Contact } from './screens/Contact';
 import { CookieProvider } from './contexts/CookieContext';
 import { UserProfile } from './types';
+import { CookieConsent } from './components/CookieConsent';
+import { AgeGate } from './components/AgeGate';
 
 const App: React.FC = () => {
   // Global State (Mocked)
@@ -41,9 +42,6 @@ const App: React.FC = () => {
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
 
   const handleConsumption = (amount: number, type: 'generate' | 'upscale') => {
-    // Premium Logic: Unlimited? Use no credits? 
-    // Assuming Premium means no deductions for now, or we can deduct for tracking. 
-    // Let's assume unlimited for now as per "Unlimitiert generieren".
     if (user.isPremium) return;
 
     if (type === 'generate') {
@@ -53,7 +51,6 @@ const App: React.FC = () => {
         setUser(prev => ({ ...prev, credits: Math.max(0, prev.credits - amount) }));
       }
     } else if (type === 'upscale') {
-      // Upscale always costs credits (or maybe free depending on interpretation, sticking to 5 as per prompt)
       setUser(prev => ({ ...prev, credits: Math.max(0, prev.credits - amount) }));
     }
   };
@@ -67,8 +64,6 @@ const App: React.FC = () => {
   };
 
   const handleUpgrade = (planId: string) => {
-    // Find plan details (mocking import usage or using simpler logic if import tricky in single edit)
-    // Better to fetch from constants, but for now strict logic:
     const creditsMap: Record<string, number> = {
       'basic': 100,
       'pro': 500,
@@ -119,6 +114,8 @@ const App: React.FC = () => {
 
   return (
     <CookieProvider>
+      <AgeGate />
+      <CookieConsent />
       <Router>
         <Layout user={user}>
           <Routes>
@@ -168,7 +165,7 @@ const App: React.FC = () => {
               }
             />
 
-            {/* Legal Pages - Accessible without authentication */}
+            {/* Legal Pages */}
             <Route path="/impressum" element={<Impressum />} />
             <Route path="/datenschutz" element={<Datenschutz />} />
             <Route path="/agb" element={<AGB />} />

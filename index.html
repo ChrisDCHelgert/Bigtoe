@@ -52,6 +52,20 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
       }
+
+      /* Global Input Fixes for Dark Mode */
+      input, textarea, select {
+        background-color: rgba(0, 0, 0, 0.4) !important;
+        color: white !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+      }
+      input::placeholder, textarea::placeholder {
+        color: rgba(156, 163, 175, 1) !important; /* gray-400 */
+      }
+      option {
+        background-color: #1a1429 !important;
+        color: white !important;
+      }
     </style>
   <script type="importmap">
 {

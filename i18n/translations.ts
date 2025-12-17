@@ -3,14 +3,14 @@ export const TRANSLATIONS = {
     de: {
         home: {
             privacyBadge: "Anonym & datenschutzorientiert",
-            headline: "Erstelle hyperrealistische, individuelle Fußbilder",
-            subheadline: "Das KI-Tool für Creator, Künstler und Enthusiasten. Erstelle einzigartige, fotorealistische, fiktive Inhalte in Sekunden – mit voller Kontrolle über Details, Perspektiven und Licht.",
-            ctaPrimary: "Jetzt generieren",
+            headline: "Erstelle hyperrealistische, individuelle Fußbilder & Fetisch-Kunst",
+            subheadline: "Das KI-Tool für Creator, Künstler und Enthusiasten. Unzensierter Zugang zu einzigartigen, fotolistischen Inhalten – Sohlen, Posen, Details.",
+            ctaPrimary: "Jetzt Fetisch-Bilder generieren",
             ctaSecondary: "Galerie ansehen",
             features: {
                 control: {
                     title: "Volle Kontrolle",
-                    desc: "Passe Sohlen, Zehen, Formen, Perspektiven und Licht exakt an."
+                    desc: "Passe Sohlen, Zehen, Formen, Perspektiven und Licht exakt an deine Vorlieben an."
                 },
                 realistic: {
                     title: "Ultrarealistisch",

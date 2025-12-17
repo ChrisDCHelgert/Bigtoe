@@ -17,7 +17,10 @@ export const StylePresetSelector: React.FC<StylePresetSelectorProps> = ({ onSele
                 <button
                     key={preset.id}
                     onClick={() => onSelect(preset)}
-                    className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-xs text-gray-300 font-medium transition-all whitespace-nowrap active:scale-95"
+                    className="
+      px-3 py-1.5 rounded-full text-xs font-medium border transition-all whitespace-nowrap
+      bg-black/20 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white
+    "
                 >
                     {preset.label}
                 </button>

@@ -1,7 +1,7 @@
 export const PRESETS = [
-  { id: '1', name: 'Beach Day', tags: ['Outdoor', 'Sand', 'Soles'] },
-  { id: '2', name: 'Office Casual', tags: ['Indoor', 'Nylon', 'Heels'] },
-  { id: '3', name: 'Morning Bed', tags: ['Indoor', 'Soft Light', 'POV'] },
+  { id: '1', name: 'Strandtag', tags: ['Outdoor', 'Sand', 'Sohlen'] },
+  { id: '2', name: 'Büro Casual', tags: ['Indoor', 'Nylon', 'Heels'] },
+  { id: '3', name: 'Morgens im Bett', tags: ['Indoor', 'Weiches Licht', 'POV'] },
 ];
 
 export const PLANS = [
@@ -10,25 +10,25 @@ export const PLANS = [
     name: 'Starter',
     price: '9,99 €',
     credits: 100,
-    features: ['50 Images/Month', 'Standard Quality', 'Basic Styles'],
-    description: 'For casual creators & trying it out',
+    features: ['50 Bilder/Monat', 'Standard Qualität', 'Basis-Stile'],
+    description: 'Zum Ausprobieren',
   },
   {
     id: 'pro',
     name: 'Creator',
     price: '19,99 €',
     credits: 500,
-    features: ['200 Images/Month', 'High Resolution', 'Priority Generation', 'No Watermarks'],
+    features: ['200 Bilder/Monat', 'Hohe Auflösung', 'Priorisierte Generierung', 'Keine Wasserzeichen'],
     recommended: true,
-    description: 'Best for content creators & artists',
+    description: 'Ideal für Creator & Künstler',
   },
   {
     id: 'premium',
     name: 'Pro',
     price: '29,99 €',
     credits: 1500,
-    features: ['Uncapped Potential', '4K Ultra-HD', 'Commercial License', 'Exclusive Prompts'],
-    description: 'For power users & agencies',
+    features: ['Unbegrenztes Potenzial', '4K Ultra-HD', 'Kommerzielle Lizenz', 'Exklusive Prompts'],
+    description: 'Für Power-Use & Agenturen',
   },
 ];
 
@@ -40,27 +40,27 @@ export const CREDIT_PACKS = [
 
 // Skin Tones (Fitzpatrick Scale - Neutral & Professional)
 export const SKIN_TONE_PRESETS = [
-  { name: 'Type I', value: 'very light skin tone, pale', hex: '#FAD7C0' },
-  { name: 'Type II', value: 'light skin tone, fair', hex: '#EAC0A5' },
-  { name: 'Type III', value: 'medium skin tone, olive', hex: '#D2A180' },
-  { name: 'Type IV', value: 'tan skin tone, bronze', hex: '#B88260' },
-  { name: 'Type V', value: 'dark skin tone, brown', hex: '#8D5B3E' },
-  { name: 'Type VI', value: 'very dark skin tone, ebony', hex: '#583626' },
+  { name: 'Typ I', value: 'very light skin tone, pale', hex: '#FAD7C0' },
+  { name: 'Typ II', value: 'light skin tone, fair', hex: '#EAC0A5' },
+  { name: 'Typ III', value: 'medium skin tone, olive', hex: '#D2A180' },
+  { name: 'Typ IV', value: 'tan skin tone, bronze', hex: '#B88260' },
+  { name: 'Typ V', value: 'dark skin tone, brown', hex: '#8D5B3E' },
+  { name: 'Typ VI', value: 'very dark skin tone, ebony', hex: '#583626' },
 ];
 
 // Grouped Visual Details for structured selection
 export const VISUAL_DETAIL_GROUPS = {
   shape: {
-    label: 'Toe & Shape',
-    options: ['Long Toes', 'Short Toes', 'Toe Spacing', 'High Arch', 'Flat Sole']
+    label: 'Form & Zehen',
+    options: ['Lange Zehen', 'Kurze Zehen', 'Zehenspreizung', 'Hoher Spann', 'Flache Sohle']
   },
   texture: {
-    label: 'Skin & Texture',
-    options: ['Smooth', 'Wrinkled Soles', 'Veiny', 'Natural Look']
+    label: 'Haut & Textur',
+    options: ['Glatt & Weich', 'Faltige Sohlen', 'Aderig', 'Natürlicher Look']
   },
   style: {
-    label: 'Style & Accessories',
-    options: ['Painted Nails', 'French Tips', 'Jewelry/Anklet', 'Tattooed', 'Wet/Oiled']
+    label: 'Stil & Extras',
+    options: ['Lackierte Nägel', 'French Tips', 'Fußkettchen', 'Tätowiert', 'Nass/Ölig']
   }
 };
 
@@ -77,39 +77,39 @@ export const STYLE_PRESETS = [
     id: 'clean_studio',
     label: 'Clean Studio',
     params: {
-      scene: 'Studio White',
+      scene: 'Studio Weiß',
       lighting: 'Softbox Studio',
-      visualDetails: ['Smooth', 'Natural Look', 'Pedicured'],
+      visualDetails: ['Glatt & Weich', 'Natürlicher Look', 'Gepflegt'],
       angle: 'side profile'
     }
   },
   {
     id: 'wrinkled_soles',
-    label: 'Wrinkled Soles',
+    label: 'Faltige Sohlen',
     params: {
       scene: 'Minimal Dark',
       lighting: 'Cinematic Low Light',
-      visualDetails: ['Wrinkled Soles', 'High Arch', 'Veiny'],
+      visualDetails: ['Faltige Sohlen', 'Hoher Spann', 'Aderig'],
       angle: 'soles focus'
     }
   },
   {
     id: 'macro_toes',
-    label: 'Macro Toes',
+    label: 'Makro Zehen',
     params: {
-      scene: 'Soft Blurred',
-      lighting: 'Natural Window Light',
-      visualDetails: ['Long Toes', 'Painted Nails', 'Smooth'],
+      scene: 'Weich Gezeichnet',
+      lighting: 'Tageslicht',
+      visualDetails: ['Lange Zehen', 'Lackierte Nägel', 'Glatt & Weich'],
       angle: 'close-up macro'
     }
   },
   {
     id: 'natural_bedroom',
-    label: 'Natural Bedroom',
+    label: 'Natürlich',
     params: {
-      scene: 'Bedroom',
-      lighting: 'Morning Sun',
-      visualDetails: ['Natural Look', 'Short Toes'],
+      scene: 'Schlafzimmer',
+      lighting: 'Morgensonne',
+      visualDetails: ['Natürlicher Look', 'Kurze Zehen'],
       angle: 'top-down view'
     }
   }
@@ -121,33 +121,33 @@ export const FORBIDDEN_WORDS = [
 ];
 
 export const CAMERA_ANGLES = [
-  { id: 'top', label: 'Top Down', value: 'top-down view' },
-  { id: 'side', label: 'Side Profile', value: 'side profile' },
-  { id: 'soles', label: 'Soles Focus', value: 'bottom view showing soles' },
-  { id: 'macro', label: 'Macro Close-Up', value: 'close-up macro shot' },
-  { id: 'full', label: 'Full Foot', value: 'full foot view' }
+  { id: 'top', label: 'Draufsicht', value: 'top-down view' },
+  { id: 'side', label: 'Seitenprofil', value: 'side profile' },
+  { id: 'soles', label: 'Sohlen-Fokus', value: 'bottom view showing soles' },
+  { id: 'macro', label: 'Makro-Nahaufnahme', value: 'close-up macro shot' },
+  { id: 'full', label: 'Ganzansicht', value: 'full foot view' }
 ];
 
 export const SCENE_OPTIONS = [
-  'Studio White',
-  'Studio Dark',
-  'Bedroom',
-  'Minimal / Black',
-  'Outdoor Concrete',
+  'Studio Weiß',
+  'Studio Dunkel',
+  'Schlafzimmer',
+  'Minimal / Schwarz',
+  'Outdoor Beton',
   'Outdoor Sand',
-  'Outdoor Grass'
+  'Outdoor Wiese'
 ];
 
 export const LIGHTING_CHIPS = [
   'Softbox Studio',
-  'Natural Window Light',
+  'Tageslicht (Fenster)',
   'Cinematic Low Light',
   'Golden Hour',
-  'Flash Photography'
+  'Blitzlicht'
 ];
 
 export const FOOT_SIDES: Record<string, string> = {
-  'left': 'left foot',
-  'right': 'right foot',
-  'both': 'both feet'
+  'left': 'Linker Fuß',
+  'right': 'Rechter Fuß',
+  'both': 'Beide Füße'
 };

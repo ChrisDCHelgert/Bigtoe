@@ -59,19 +59,21 @@ export const PromptBuilder = {
         // Strict Side Logic
         if (settings.side === 'left') {
             segments.push(`(single standalone left ${genderTerm} foot:1.6)`);
+            segments.push('anatomically correct left foot: big toe on right side, pinky toe on left side');
             segments.push('exactly one foot, no second foot, solitary foot');
         } else if (settings.side === 'right') {
             segments.push(`(single standalone right ${genderTerm} foot:1.6)`);
+            segments.push('anatomically correct right foot: big toe on left side, pinky toe on right side');
             segments.push('exactly one foot, no second foot, solitary foot');
         } else {
             segments.push(`(pair of ${genderTerm} feet:1.5)`);
-            segments.push('left and right foot, two feet');
+            segments.push('left and right foot, two feet, symmetrical composition');
         }
 
         segments.push(`size ${settings.footSize}`);
 
         // A. ANATOMY ENFORCEMENT (Positive)
-        segments.push('perfect anatomy, exactly 5 toes per foot, natural toe alignment, no extra digits, realistic bone structure');
+        segments.push('perfect anatomy, exactly 5 toes per foot (1 big toe + 4 small toes), natural arch, realistic proportions, no extra digits');
 
         // 2. CORE ATTRIBUTES
         segments.push(`(${settings.skinTone.value})`);
@@ -82,6 +84,7 @@ export const PromptBuilder = {
 
         if (isSoleFocus) {
             segments.push('(sole view:1.5), (bottom of foot:1.5), showing sole patterns, heel and ball of foot, textured skin');
+            segments.push('toes curling away from camera');
         } else {
             segments.push(settings.angle.value);
         }
@@ -119,14 +122,14 @@ export const PromptBuilder = {
 
         // 1. Base Quality & Anatomy
         negs.push(NEGATIVE_PROMPTS.base);
-        negs.push(NEGATIVE_PROMPTS.anatomy);
+        negs.push('extra toes, missing toes, fused toes, mutated toes, more than 5 toes, less than 5 toes');
+        negs.push('double big toe, wrong toe order, impossible anatomy, twisted toes, deformed shape, unnatural arch, bad proportions');
+        negs.push('claws, animal feet, paw');
 
         // 2. Strict Foot Count Logic
         if (settings.side === 'left' || settings.side === 'right') {
             negs.push(NEGATIVE_PROMPTS.singleFoot);
-            // Explicitly exclude the OTHER side if possible? 
-            // "right foot" is harder to negate without negating the subject, 
-            // but "extra feet" covers it.
+            negs.push('mirror image, reflection, two legs, partner, twin');
         } else {
             // If 'both', we generally don't want 'one foot' or 'missing foot'
             negs.push('missing foot, amputee, single foot');
@@ -136,6 +139,7 @@ export const PromptBuilder = {
         const isSoleFocus = settings.visualDetails?.includes('Flache Sohlen') || settings.visualDetails?.includes('Faltige Sohlen') || settings.angle?.value?.toLowerCase().includes('sole');
         if (isSoleFocus) {
             negs.push(NEGATIVE_PROMPTS.soleFocus);
+            negs.push('frontal toes, tops of toes, toe nails'); // Strict exclusion for sole view
         }
 
         // 4. Feature Exclusion Logic (The "UI = Truth" rule)

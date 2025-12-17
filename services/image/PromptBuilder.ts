@@ -13,41 +13,37 @@ export interface PromptSettings {
     quality?: 'standard' | 'high' | 'studio';
 }
 
-interface PromptFragment {
-    text: string;
-    weight?: number; // 1.0 default
-    required?: boolean;
-    conflicts?: string[]; // IDs of features this conflicts with (helper for future UI)
-}
-
-// Mapping UI strings (German) to Engineering Prompt (English)
-const FEATURE_MAP: Record<string, string> = {
+// STRICT MAPPING: Feature -> { Positive, Negative }
+// If feature is SELECTED -> Positive is added.
+// If feature is NOT SELECTED -> Negative is added (Explicit Exclusion).
+const STRICT_FEATURES: Record<string, { pos: string, neg: string }> = {
     // SHAPE
-    'Lange Zehen': '(long toes:1.3), elegant toes',
-    'Kurze Zehen': 'short toes, cute feet',
-    'Zehenspreizung': 'spread toes, splayed toes, active pose',
-    'Hoher Spann': '(high arch feet:1.4), arched foot, pointed foot',
-    'Flache Sohlen': 'flat soles, flat feet, standing firmly',
+    'Lange Zehen': { pos: '(long toes:1.3), elegant toes, slender digits', neg: 'long toes' },
+    'Kurze Zehen': { pos: '(short toes:1.3), cute feet, small toes', neg: 'short toes' },
+    'Zehenspreizung': { pos: '(spread toes:1.4), splayed toes, active pose, toes apart', neg: 'spread toes' },
+    'Hoher Spann': { pos: '(high arch:1.4), arched foot, pointed foot', neg: 'high arch' },
+    'Flache Sohlen': { pos: '(flat soles:1.4), standing firmly, flat feet', neg: 'flat soles' },
 
     // TEXTURE
-    'Glatt & Weich': 'smooth skin, soft texture, unblemished',
-    'Faltige Sohlen': '(wrinkled soles:1.4), deep skin folds, highly textured soles, mature skin',
-    'Aderig': '(veiny feet:1.3), visible veins, vascular skin, realistic vascularity',
-    'Natürlicher Look': 'raw photo, natural skin texture, less makeup, real skin pores',
+    'Glatt & Weich': { pos: '(smooth skin:1.3), soft texture, unblemished, baby soft', neg: 'smooth skin, airbrushed' },
+    'Faltige Sohlen': { pos: '(wrinkled soles:1.5), deep skin folds, highly textured soles, mature skin', neg: 'wrinkled soles, deep folds, mature skin' },
+    'Aderig': { pos: '(veiny feet:1.4), visible veins, vascular skin, realistic vascularity, anatomically correct veins', neg: 'veiny, vascular, veins' },
+    'Natürlicher Look': { pos: 'raw photo, natural skin texture, less makeup, real skin pores, slight imperfections', neg: 'makeup, airbrushed, plastic skin' },
 
     // STYLE
-    'Lackierte Nägel': '(painted toenails:1.4), shiny nail polish, pedicure, vibrant color',
-    'French Tips': '(french tip pedicure:1.4), white tip nails, natural base, manicured toes',
-    'Fußkettchen': '(wearing anklet:1.4), gold chain around ankle, foot jewelry',
-    'Tätowiert': '(tattoo on foot:1.3), ink design on skin, artistic tattoo',
-    'Nass/Ölig': '(wet skin:1.3), shiny oily skin, glossy texture, baby oil'
+    'Lackierte Nägel': { pos: '(painted toenails:1.5), shiny nail polish, pedicure, vibrant color', neg: 'painted nails, nail polish, pedicure' },
+    'French Tips': { pos: '(french tip pedicure:1.5), white tip nails, natural base, manicured toes', neg: 'french tips, painted nails' },
+    'Fußkettchen': { pos: '(wearing anklet:1.5), gold chain around ankle, foot jewelry', neg: 'jewelry, anklet, bracelet, ring, metal' },
+    'Tätowiert': { pos: '(tattoo on foot:1.5), ink design on skin, artistic tattoo', neg: 'tattoo, ink, drawing on skin' },
+    'Nass/Ölig': { pos: '(wet skin:1.4), shiny oily skin, glossy texture, baby oil, covered in oil', neg: 'oily, wet, sweat' }
 };
 
 const NEGATIVE_PROMPTS = {
-    base: 'ugly, deformed, disfigured, poor quality, bad anatomy, missing limbs, extra limbs, fused fingers, watermark, text, signature, cartoon, illustration, painting, drawing, render, 3d, doll, plastic',
-    noPolish: 'nail polish, painted nails, colorful nails',
-    noJewelry: 'jewelry, anklet, bracelet, ring',
-    noShoes: 'shoes, sandals, socks, footwear' // We want bare feet usually
+    base: 'ugly, deformed, disfigured, poor quality, bad anatomy, missing limbs, fused fingers, watermark, text, signature, cartoon, illustration, painting, drawing, render, 3d, doll, plastic, blurred, low resolution',
+    anatomy: 'extra toes, missing toes, fused toes, mutated toes, more than 5 toes, less than 5 toes, claws, animal feet, paw, deformed shape, unnatural arch, bad proportions',
+    singleFoot: 'two feet, extra legs, double exposure, mirrored image, second foot, twin, multiple feet',
+    soleFocus: 'visible toe nails, top of feet, face, legs, knees, body',
+    shoes: 'shoes, sandals, socks, footwear, boots, sneakers'
 };
 
 export const PromptBuilder = {
@@ -57,94 +53,156 @@ export const PromptBuilder = {
     buildPrompt: (settings: PromptSettings): string => {
         const segments: string[] = [];
 
-        // 1. SUBJECT (Weighted)
+        // 1. SUBJECT & SIDE (The most critical part)
         const genderTerm = settings.gender === 'diverse' ? 'person' : (settings.gender === 'male' ? 'man' : 'woman');
-        const sideTerm = settings.side === 'both' ? 'pair of feet' : (settings.side === 'left' ? 'left foot' : 'right foot');
 
-        segments.push(`(Photorealistic ${genderTerm} feet:1.2)`);
-        segments.push(sideTerm);
+        // Strict Side Logic
+        if (settings.side === 'left') {
+            segments.push(`(single standalone left ${genderTerm} foot:1.6)`);
+            segments.push('exactly one foot, no second foot, solitary foot');
+        } else if (settings.side === 'right') {
+            segments.push(`(single standalone right ${genderTerm} foot:1.6)`);
+            segments.push('exactly one foot, no second foot, solitary foot');
+        } else {
+            segments.push(`(pair of ${genderTerm} feet:1.5)`);
+            segments.push('left and right foot, two feet');
+        }
+
         segments.push(`size ${settings.footSize}`);
 
         // A. ANATOMY ENFORCEMENT (Positive)
-        segments.push('perfect anatomy, exactly 5 toes per foot, natural toe alignment, no extra digits');
+        segments.push('perfect anatomy, exactly 5 toes per foot, natural toe alignment, no extra digits, realistic bone structure');
 
         // 2. CORE ATTRIBUTES
-        // Skin tone is crucial
         segments.push(`(${settings.skinTone.value})`);
 
-        // CHECK for Sole Focus to adjust Angle prompt
+        // 3. PERSPECTIVE / ANGLE
+        // Check for Sole Focus overrides
         const isSoleFocus = settings.visualDetails?.includes('Flache Sohlen') || settings.visualDetails?.includes('Faltige Sohlen') || settings.angle?.value?.toLowerCase().includes('sole');
+
         if (isSoleFocus) {
-            segments.push('(sole view:1.4), (bottom of foot:1.4), showing sole patterns, heel and ball of foot');
+            segments.push('(sole view:1.5), (bottom of foot:1.5), showing sole patterns, heel and ball of foot, textured skin');
         } else {
             segments.push(settings.angle.value);
         }
 
-        // 3. FEATURES (The critical part)
+        // 4. FEATURES (Strict Positive Mapping)
         const details = settings.visualDetails || [];
-
-        // Map features, prioritizing certain ones
         const featurePrompts: string[] = [];
 
         details.forEach(detail => {
-            const mapped = FEATURE_MAP[detail];
-            if (mapped) {
-                featurePrompts.push(mapped);
+            const rules = STRICT_FEATURES[detail];
+            if (rules) {
+                featurePrompts.push(rules.pos);
             }
         });
 
         if (featurePrompts.length > 0) {
-            segments.push(`Details: ${featurePrompts.join(', ')}`);
+            segments.push(featurePrompts.join(', '));
         }
 
-        // 4. SCENE & LIGHTING
+        // 5. SCENE & LIGHTING
         segments.push(`Scene: ${translateScene(settings.scene)}`);
         segments.push(`Lighting: ${translateLighting(settings.lighting)}`);
 
-        // 5. QUALITY BOOSTERS (V5.0 enforcement)
-        segments.push('8k resolution, highly detailed skin texture, realistic toes, masterpiece, dslr, macro photography');
+        // 6. QUALITY BOOSTERS
+        segments.push('8k resolution, highly detailed skin texture, realistic toes, masterpiece, dslr, macro photography, raw output');
 
         return segments.join(', ');
     },
 
     /**
-     * Builds the negative prompt, handling conflicts.
+     * Builds the negative prompt, handling conflicts and strict exclusions.
      */
     buildNegativePrompt: (settings: PromptSettings): string => {
-        const negs = [
-            NEGATIVE_PROMPTS.base,
-            'extra toes, missing toes, fused toes, mutated toes, more than 5 toes, less than 5 toes',
-            'claws, animal feet, paw, deformed shape, unnatural arch'
-        ];
-        const details = settings.visualDetails || [];
+        const negs: string[] = [];
 
-        // Conflict Resolution:
-        // Only add "noPolish" if user did NOT select painted/french
-        const hasPolish = details.includes('Lackierte Nägel') || details.includes('French Tips');
-        if (!hasPolish) {
-            // If they explicitly asked for Natural, we enforce no polish stronger
-            if (details.includes('Natürlicher Look')) {
-                negs.push(NEGATIVE_PROMPTS.noPolish);
-            }
+        // 1. Base Quality & Anatomy
+        negs.push(NEGATIVE_PROMPTS.base);
+        negs.push(NEGATIVE_PROMPTS.anatomy);
+
+        // 2. Strict Foot Count Logic
+        if (settings.side === 'left' || settings.side === 'right') {
+            negs.push(NEGATIVE_PROMPTS.singleFoot);
+            // Explicitly exclude the OTHER side if possible? 
+            // "right foot" is harder to negate without negating the subject, 
+            // but "extra feet" covers it.
+        } else {
+            // If 'both', we generally don't want 'one foot' or 'missing foot'
+            negs.push('missing foot, amputee, single foot');
         }
 
-        // Only add "noJewelry" if user did NOT select Anklet
-        const hasJewelry = details.includes('Fußkettchen');
-        if (!hasJewelry) {
-            negs.push(NEGATIVE_PROMPTS.noJewelry);
-        }
-
-        // Always no shoes for now (unless we add shoe options later)
-        negs.push(NEGATIVE_PROMPTS.noShoes);
-
-        // Perspective Logic
-        const isSoleFocus = details.includes('Flache Sohlen') || details.includes('Faltige Sohlen') || settings.angle?.value?.toLowerCase().includes('sole');
+        // 3. Perspective Logic
+        const isSoleFocus = settings.visualDetails?.includes('Flache Sohlen') || settings.visualDetails?.includes('Faltige Sohlen') || settings.angle?.value?.toLowerCase().includes('sole');
         if (isSoleFocus) {
-            // If viewing soles, we don't want to see the top of toes or faces
-            negs.push('visible toe nails, top of feet, face, legs');
+            negs.push(NEGATIVE_PROMPTS.soleFocus);
         }
 
-        return negs.join(', ');
+        // 4. Feature Exclusion Logic (The "UI = Truth" rule)
+        // We iterate over ALL defined special features. 
+        // If it is NOT in settings.visualDetails, we add its NEGATIVE rule.
+        const activeDetails = settings.visualDetails || [];
+
+        Object.keys(STRICT_FEATURES).forEach(featureName => {
+            const rules = STRICT_FEATURES[featureName];
+
+            // Check if this feature is "Style/Texture" that should be excluded if not present.
+            // Some features like "Shape" (Long/Short toes) are mutually exclusive but 'normal' is default.
+            // We focus on optional additions: Polish, Jewelry, Tattoos, Oil, Wrinkles (if smooth preferred), etc.
+
+            // Logic: Is this feature active?
+            const isActive = activeDetails.includes(featureName);
+
+            // Special Handling per Group to avoid logic errors (e.g. don't negate "short toes" just because "long toes" not selected, unless "short toes" also not selected, leading to "normal")
+            // BUT: For "Add-ons" like Polish, Tattoo, Jewelry -> STRICT EXCLUDE.
+
+            if (featureName === 'Lackierte Nägel' || featureName === 'French Tips') {
+                if (!isActive && !activeDetails.includes('Lackierte Nägel') && !activeDetails.includes('French Tips')) {
+                    // Only add no-polish if NEITHER is selected
+                    // We avoid duplicates by checking if we already added it? No, Set handles that or we just add.
+                    // simpler: if current key is Lackierte Nägel and it's missing, check if French is there.
+                }
+            }
+
+        });
+
+        // Simpler Manual Exclusion based on categories (Robust)
+
+        // Polish
+        if (!activeDetails.includes('Lackierte Nägel') && !activeDetails.includes('French Tips')) {
+            negs.push(STRICT_FEATURES['Lackierte Nägel'].neg); // 'painted nails, nail polish'
+            negs.push(STRICT_FEATURES['French Tips'].neg);
+        }
+
+        // Jewelry
+        if (!activeDetails.includes('Fußkettchen')) {
+            negs.push(STRICT_FEATURES['Fußkettchen'].neg);
+        }
+
+        // Tattoos
+        if (!activeDetails.includes('Tätowiert')) {
+            negs.push(STRICT_FEATURES['Tätowiert'].neg);
+        }
+
+        // Wet/Oil
+        if (!activeDetails.includes('Nass/Ölig')) {
+            negs.push(STRICT_FEATURES['Nass/Ölig'].neg);
+        }
+
+        // Veins (If not requested, prefer smooth? Or just don't force it? User said "Was nicht ausgewählt ist, darf NICHT erscheinen")
+        // If "Aderig" not selected, we add "veiny" to negative?
+        // Maybe too strict for "Natural Look", but let's try to follow "UI = Truth".
+        if (!activeDetails.includes('Aderig')) {
+            // Careful: Don't make them plastic. But prevent "Excessive veins".
+            // negs.push('excessive veins, bulging veins'); 
+        }
+
+        // Shoes (Always exclude unless we add shoe option)
+        negs.push(NEGATIVE_PROMPTS.shoes);
+
+        // Deduping
+        const uniqueNegs = Array.from(new Set(negs.join(', ').split(',').map(s => s.trim()).filter(s => s.length > 0)));
+        return uniqueNegs.join(', ');
     },
 
     /**
@@ -154,7 +212,7 @@ export const PromptBuilder = {
         return {
             prompt: PromptBuilder.buildPrompt(settings),
             negative_prompt: PromptBuilder.buildNegativePrompt(settings),
-            active_features: settings.visualDetails.map(d => `${d} -> ${FEATURE_MAP[d] ? 'MAPPED' : 'MISSING'}`),
+            active_features: settings.visualDetails.map(d => `${d} -> ${STRICT_FEATURES[d] ? 'MAPPED' : 'MISSING'}`),
             settings_snapshot: settings
         };
     }

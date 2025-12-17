@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Search, Filter, ArrowLeft, Star, Trash2 } from 'lucide-react';
 
-import { FavoritesService } from '../services/FavoritesService';
+import { GalleryService, GalleryItem } from '../services/GalleryService';
 
 interface GalleryProps {
-  images?: any[];
+  images?: any[]; // Legacy prop, might be redundant if we fully switch
   onToggleFavorite?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
@@ -17,36 +17,28 @@ import { ImageModal } from '../components/ImageModal';
 export const Gallery: React.FC<GalleryProps> = ({ images = [], onToggleFavorite, onDelete }) => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('All');
-  const [favorites, setFavorites] = useState(FavoritesService.getFavorites());
+  const [galleryImages, setGalleryImages] = useState<GalleryItem[]>(GalleryService.getImages());
   const [selectedImage, setSelectedImage] = useState<any | null>(null);
   const tabs = ['All', 'Favorites', 'Soles', 'Arches'];
 
-  // Refresh favorites on mount and periodically check/sync? 
-  // For simplicity, we assume this component remounts or we can add a listener logic later.
-  // We'll merge Props Images (mock) with Local Favorites.
-
-  // Convert local favorites to compatible image objects
-  const localFavImages = favorites.map(f => ({
-    id: f.id,
-    url: f.url,
-    isFavorite: true,
-    tag: 'Saved'
-  }));
-
-  // Merge: Prefer local favorites for the 'Favorites' tab.
-  // For 'All', we show everything.
-  const combinedImages = [...localFavImages, ...images];
-
-  const displayImages = combinedImages.filter(img => {
+  const displayImages = galleryImages.filter(img => {
     if (filter === 'All') return true;
-    if (filter === 'Favorites') return img.isFavorite; // This relies on the flag being correct
-    return img.tags?.includes(filter) || img.tag === filter;
+    if (filter === 'Favorites') return img.isFavorite;
+    return img.tags?.some(tag => tag.toLowerCase().includes(filter.toLowerCase())) || false;
   });
 
-  const handleToggleFav = (url: string) => {
-    FavoritesService.toggleFavorite(url);
-    setFavorites(FavoritesService.getFavorites()); // Refresh local state
+  const handleToggleFav = (idOrUrl: string) => {
+    GalleryService.toggleFavorite(idOrUrl);
+    setGalleryImages(GalleryService.getImages()); // Refresh local state
   };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Delete this image?')) {
+      GalleryService.deleteImage(id);
+      setGalleryImages(GalleryService.getImages());
+    }
+  };
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -109,13 +101,13 @@ export const Gallery: React.FC<GalleryProps> = ({ images = [], onToggleFavorite,
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
               <div className="flex justify-end gap-2">
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleToggleFav(img.url); }}
+                  onClick={(e) => { e.stopPropagation(); handleToggleFav(img.id); }}
                   className={`p-2 rounded-full backdrop-blur-md ${img.isFavorite ? 'bg-yellow-500 text-white' : 'bg-black/50 text-white hover:bg-yellow-500/50'}`}
                 >
                   <Star size={14} fill={img.isFavorite ? "currentColor" : "none"} />
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); onDelete && onDelete(img.id); }}
+                  onClick={(e) => { e.stopPropagation(); handleDelete(img.id); }}
                   className="p-2 bg-black/50 backdrop-blur-md rounded-full text-white hover:bg-red-500 transition-colors"
                 >
                   <Trash2 size={14} />

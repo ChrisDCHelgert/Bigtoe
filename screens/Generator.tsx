@@ -26,6 +26,10 @@ interface GeneratorProps {
 }
 
 import { FavoritesService } from '../services/FavoritesService';
+import { GalleryService } from '../services/GalleryService';
+import { PromptBuilder } from '../services/image/PromptBuilder';
+
+
 
 // ... imports remain the same
 
@@ -66,14 +70,9 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
   const toggleFavorite = () => {
     if (!resultImage) return;
 
-    // Use Service
-    const isNowFavorite = FavoritesService.toggleFavorite(resultImage);
+    // Use GalleryService (Auto-saved image)
+    const isNowFavorite = GalleryService.toggleFavorite(resultImage); // Service handles URL lookup
     setIsFavorite(isNowFavorite);
-
-    if (isNowFavorite) {
-      // Optional: Animation or Toast
-      console.log("Added to favorites via Service");
-    }
   };
 
   const handleStylePreset = (preset: typeof STYLE_PRESETS[0]) => {
@@ -114,16 +113,27 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
     }
 
     try {
-      const genderPrompt = params.gender === 'diverse' ? 'non-binary person' : params.gender;
-      const prompt = `Photorealistic ${genderPrompt} feet, ${FOOT_SIDES[params.side]}, ${params.angle.value}, ${params.skinTone.value}. Details: ${params.visualDetails.join(', ')}. Scene: ${params.scene}. Lighting: ${params.lighting || 'balanced'}. 8k resolution, highly detailed skin texture, realistic toes, masterpiece.`;
+      const prompt = PromptBuilder.buildPrompt(params);
+      const negativePrompt = PromptBuilder.buildNegativePrompt(params);
+
+      // DEBUG LOGGING (as requested)
+      if (process.env.NODE_ENV === 'development' || true) {
+        console.groupCollapsed("[Generator] Prompt Debug");
+        const debugInfo = PromptBuilder.debug(params);
+        console.log("Final Prompt:", debugInfo.prompt);
+        console.log("Negative Prompt:", debugInfo.negative_prompt);
+        console.log("Active Features:", debugInfo.active_features);
+        console.groupEnd();
+      }
 
       console.log("[Generator] Starting request...", { prompt });
 
       // 2. Call API
       const result = await imageService.generateImage({
         prompt: prompt,
+        negativePrompt: negativePrompt, // Pass negative prompt explicitly
         aspectRatio: '16:9',
-        enhancePrompt: true,
+        enhancePrompt: false, // We built a strong prompt manually, disable auto-enhance to prevent overriding
         params: { ...params }
       }, user.plan === 'Pro' || user.plan === 'Creator');
 
@@ -147,8 +157,16 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
       setIsFavorite(false); // Reset favorite state for new image
       setStatus('loading_image'); // UI stays in loading state until <img> loads
 
-      // Persist
+      // Persist (Legacy)
       localStorage.setItem('bigtoe_last_image', finalImageUrl);
+
+      // --- AUTO SAVE TO GALLERY ---
+      GalleryService.addImage({
+        url: finalImageUrl,
+        prompt: prompt,
+        params: params,
+        tags: [params.side, params.gender, 'generated']
+      });
 
       // Consume Credits
       handleConsumption(1, 'generate');

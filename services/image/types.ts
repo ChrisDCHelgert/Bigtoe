@@ -8,6 +8,7 @@ export interface GenerationRequest {
     width?: number;
     height?: number;
     aspectRatio?: string; // e.g. "16:9"
+    enhancePrompt?: boolean;
     params: GeneratorParams; // Pass through for logging/metadata
     identityToken?: string;
 }

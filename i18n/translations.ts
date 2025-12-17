@@ -2,23 +2,23 @@
 export const TRANSLATIONS = {
     de: {
         home: {
-            privacyBadge: "Anonym & datenschutzorientiert",
-            headline: "Erstelle hyperrealistische, individuelle Fußbilder & Fetisch-Kunst",
-            subheadline: "Das KI-Tool für Creator, Künstler und Enthusiasten. Unzensierter Zugang zu einzigartigen, fotolistischen Inhalten – Sohlen, Posen, Details.",
-            ctaPrimary: "Jetzt Fetisch-Bilder generieren",
-            ctaSecondary: "Galerie ansehen",
+            privacyBadge: "Anonym & Diskret",
+            headline: "Erlebe deine Fantasien. In Perfektion generiert.",
+            subheadline: "Tauche ein in eine Welt aus Ästhetik, Textur und Verlangen. Erstelle fotorealistische Fuß-Kunstwerke ganz nach deinen Wünschen – Sohlen, Arches, Posen. Fiktiv & sicher.",
+            ctaPrimary: "Jetzt Fantasien erstellen",
+            ctaSecondary: "",
             features: {
                 control: {
-                    title: "Volle Kontrolle",
-                    desc: "Passe Sohlen, Zehen, Formen, Perspektiven und Licht exakt an deine Vorlieben an."
+                    title: "Absolute Kontrolle",
+                    desc: "Bestimme jeden Winkel. Jede Falte. Jedes Detail. Deine Vision wird Realität."
                 },
                 realistic: {
-                    title: "Ultrarealistisch",
-                    desc: "Moderne KI-Generierung mit Studio-ähnlicher Bildqualität."
+                    title: "Fühlbare Realität",
+                    desc: "Texturen, die man fast spüren kann. Licht, das verführt. KI auf höchstem Niveau."
                 },
                 private: {
-                    title: "100 % privat",
-                    desc: "Alle Generierungen sind ausschließlich für dich sichtbar. Keine echten Personen. Nur fiktive Inhalte."
+                    title: "Dein Geheimnis",
+                    desc: "Deine Galerie gehört nur dir. Alle Inhalte sind 100% fiktiv und sicher."
                 }
             }
         }

@@ -128,5 +128,6 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
           <span className="text-[10px] uppercase tracking-wider">100% KI-generiert. Keine echten Personen.</span>
         </div>
       </div>
-      );
+    </div>
+  );
 };

@@ -98,6 +98,37 @@ export const PromptBuilder = {
 
         segments.push(`size ${settings.footSize}`);
 
+        // --- PRIORITY FEATURES (Moved to Top for Visibility) ---
+
+        // JEWELRY (Priority)
+        if (settings.jewelry?.enabled) {
+            segments.push(`(wearing ${settings.jewelry.type}:1.8), (jewelry focus:1.3)`);
+            segments.push(`${settings.jewelry.materials} ${settings.jewelry.type}, ${settings.jewelry.style} style`);
+        }
+
+        // BONDAGE (Priority)
+        if (settings.bondage?.enabled) {
+            const material = settings.bondage.material.toLowerCase().includes('seil') ? 'rope' : 'leather straps';
+            segments.push(`(tied feet:1.8), (shibari rope:1.7), (bound ankles:1.6), ${settings.bondage.color} ${material}, ${settings.bondage.level === 'light' ? 'simple binding' : 'complex kinbaku binding'}`);
+        }
+
+        // NAILS (Priority to avoid "natural" override)
+        if (settings.nails?.enabled) {
+            if (settings.nails.french) {
+                segments.push(`(french pedicure:1.7), white tips, ${settings.nails.frenchBase || 'nude'} base`);
+            } else {
+                segments.push(`(${settings.nails.color} lacquered toenails:1.7), ${settings.nails.finish} finish`);
+            }
+        }
+
+        // TATTOOS
+        if (settings.tattoos?.enabled) {
+            const places = settings.tattoos.placement ? settings.tattoos.placement.join(' and ') : 'foot';
+            segments.push(`(tattoo on ${places}:1.5), ${settings.tattoos.motif} ink`);
+        }
+
+        // --- END PRIORITY FEATURES ---
+
         // A. ANATOMY ENFORCEMENT (Positive)
         segments.push('perfect anatomy, exactly 5 toes per foot (1 big toe + 4 small toes), natural arch, realistic proportions, no extra digits');
 
@@ -130,18 +161,7 @@ export const PromptBuilder = {
             segments.push(featurePrompts.join(', '));
         }
 
-        // 5. JEWELRY & BONDAGE (Boosted Priority for SDXL)
-        // Moved up to ensure they aren't cut off or overshadowed
-        if (settings.jewelry?.enabled) {
-            // Stronger weight (1.6) + Explicit "wearing"
-            segments.push(`(wearing ${settings.jewelry.type}:1.6), (jewelry on feet:1.4), ${settings.jewelry.materials} ${settings.jewelry.type}, ${settings.jewelry.style} style`);
-        }
 
-        if (settings.bondage?.enabled) {
-            // Replaced "shibari" with more direct "rope" terms for SDXL adherence
-            const material = settings.bondage.material.toLowerCase().includes('seil') ? 'rope' : 'leather straps';
-            segments.push(`(foot bondage:1.7), (bound feet:1.6), (${material} binding:1.5), ${settings.bondage.color} ${material}, ${settings.bondage.level === 'light' ? 'simple binding' : 'complex intricate binding'}`);
-        }
 
         // 6. SCENE & LIGHTING
         segments.push(`Scene: ${translateScene(settings.scene)}`);
@@ -151,27 +171,7 @@ export const PromptBuilder = {
         const age = AGE_OPTIONS.find(a => a.id === settings.age) || AGE_OPTIONS[0];
         segments.push(`(${age.prompt}:1.4)`);
 
-        // 7. NAILS (V3) - Explicit Color Logic
-        if (settings.nails?.enabled) {
-            if (settings.nails.french) {
-                segments.push(`(french pedicure:1.5), white tips, ${settings.nails.frenchBase || 'nude'} base, manicured toes`);
-            } else {
-                segments.push(`(${settings.nails.color} nail polish:1.5), ${settings.nails.finish} finish pedicure`);
-            }
-        } else {
-            // If nails NOT enabled, maybe enforce natural? Or explicitly "unpainted"?
-            // User didn't request "explicit unpainted" but "explicit color if active".
-            // Let's add "natural nails" if no color selected to avoid random polish?
-            // segments.push('natural unpainted toenails');
-        }
 
-        // 8. TATTOOS (V3)
-        if (settings.tattoos?.enabled) {
-            const places = settings.tattoos.placement ? settings.tattoos.placement.join(' and ') : 'foot';
-            segments.push(`(tattoo on ${places}:1.4), ${settings.tattoos.motif} style tattoo, ${settings.tattoos.intensity} ink`);
-        } else {
-            // Explicit Negative handled in buildNegative
-        }
 
 
         // (Deleted old Jewelry/Bondage block at end to avoid duplicates)

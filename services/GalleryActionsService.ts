@@ -91,13 +91,17 @@ export const GalleryActionsService = {
     /**
      * Helper to Create & Save the new Item
      */
-    saveResultAsNewItem: (originalUrl: string, tag: string): GalleryItem => {
-        // Mock new URL (append query to make unique ID possible)
-        const separator = originalUrl.includes('?') ? '&' : '?';
-        const newUrl = `${originalUrl}${separator}variant=${tag}`;
+    saveResultAsNewItem: (originalUrl: string, tag: string, dataUriOverride?: string): GalleryItem => {
+        // If we have a real data URI (from client crop), use it.
+        // Otherwise mock new URL (append query to make unique ID possible)
+        let finalUrl = dataUriOverride;
+        if (!finalUrl) {
+            const separator = originalUrl.includes('?') ? '&' : '?';
+            finalUrl = `${originalUrl}${separator}variant=${tag}`;
+        }
 
         return GalleryService.addImage({
-            url: newUrl,
+            url: finalUrl,
             tags: ['generated', tag]
         });
     }

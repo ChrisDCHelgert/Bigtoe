@@ -65,11 +65,20 @@ export const PromptBuilder = {
         segments.push(sideTerm);
         segments.push(`size ${settings.footSize}`);
 
+        // A. ANATOMY ENFORCEMENT (Positive)
+        segments.push('perfect anatomy, exactly 5 toes per foot, natural toe alignment, no extra digits');
+
         // 2. CORE ATTRIBUTES
         // Skin tone is crucial
         segments.push(`(${settings.skinTone.value})`);
-        // Angle relies on correct mapping from View
-        segments.push(settings.angle.value);
+
+        // CHECK for Sole Focus to adjust Angle prompt
+        const isSoleFocus = settings.visualDetails?.includes('Flache Sohlen') || settings.visualDetails?.includes('Faltige Sohlen') || settings.angle?.value?.toLowerCase().includes('sole');
+        if (isSoleFocus) {
+            segments.push('(sole view:1.4), (bottom of foot:1.4), showing sole patterns, heel and ball of foot');
+        } else {
+            segments.push(settings.angle.value);
+        }
 
         // 3. FEATURES (The critical part)
         const details = settings.visualDetails || [];
@@ -102,7 +111,11 @@ export const PromptBuilder = {
      * Builds the negative prompt, handling conflicts.
      */
     buildNegativePrompt: (settings: PromptSettings): string => {
-        const negs = [NEGATIVE_PROMPTS.base];
+        const negs = [
+            NEGATIVE_PROMPTS.base,
+            'extra toes, missing toes, fused toes, mutated toes, more than 5 toes, less than 5 toes',
+            'claws, animal feet, paw, deformed shape, unnatural arch'
+        ];
         const details = settings.visualDetails || [];
 
         // Conflict Resolution:
@@ -123,6 +136,13 @@ export const PromptBuilder = {
 
         // Always no shoes for now (unless we add shoe options later)
         negs.push(NEGATIVE_PROMPTS.noShoes);
+
+        // Perspective Logic
+        const isSoleFocus = details.includes('Flache Sohlen') || details.includes('Faltige Sohlen') || settings.angle?.value?.toLowerCase().includes('sole');
+        if (isSoleFocus) {
+            // If viewing soles, we don't want to see the top of toes or faces
+            negs.push('visible toe nails, top of feet, face, legs');
+        }
 
         return negs.join(', ');
     },

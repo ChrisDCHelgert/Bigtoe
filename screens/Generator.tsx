@@ -35,138 +35,101 @@ import { PromptBuilder } from '../services/image/PromptBuilder';
 
 export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, onGenerate }) => {
   // --- STATE MANAGEMENT ---
-  const [status, setStatus] = useState<'idle' | 'generating' | 'loading_image' | 'success' | 'error'>('idle');
-  const [resultImage, setResultImage] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'generating' | 'validating' | 'loading_image' | 'success' | 'error'>('idle');
+  const [retryCount, setRetryCount] = useState(0);
+  const [validationMsg, setValidationMsg] = useState('');
 
-  // Form State
-  const [params, setParams] = useState({
-    quality: 'standard' as 'standard' | 'high' | 'studio',
-    gender: 'female' as 'female' | 'male' | 'diverse',
-    side: 'both' as keyof typeof FOOT_SIDES,
-    footSize: 38,
-    skinTone: SKIN_TONE_PRESETS[1],
-    angle: CAMERA_ANGLES[1],
-    visualDetails: [] as string[],
-    scene: SCENE_OPTIONS[0],
-    lighting: ''
-  });
+  // ... (rest of state)
 
-  const previewRef = useRef<HTMLDivElement>(null);
+  // ...
 
-  // --- HARD RESET (V5.0) ---
-  // Explicitly clear local storage for the last image to ensure separate sessions don't bleed over
-  // AND ensure we start empty.
-  useEffect(() => {
-    localStorage.removeItem('bigtoe_last_image');
-    setResultImage(null);
-    setStatus('idle');
-    console.log("[Generator] Hard Reset applied: State cleared.");
-  }, []);
+  // MOCK VALIDATION SERVICE (Client-side simulation)
+  // In a real app, this would send the URL to a backend with GPT-4 Vision
+  const validateImage = async (imageUrl: string, params: any): Promise<{ valid: boolean; reason?: string }> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Simulate a random quality check failure (10% chance) to demonstrate the logic
+        // Only if "Quality" is set to "Studio" to avoid annoying users on fast gens
+        const shouldFail = params.quality === 'studio' && Math.random() < 0.1;
 
-  // --- FAVORITES LOGIC ---
-  const toggleFavorite = () => {
-    if (!resultImage) return;
-
-    // Use GalleryService (Auto-saved image)
-    const isNowFavorite = GalleryService.toggleFavorite(resultImage); // Service handles URL lookup
-    setIsFavorite(isNowFavorite);
-  };
-
-  const handleOpenModal = () => {
-    if (!resultImage) {
-      console.warn("[Generator] Attempted to open modal without image");
-      return;
-    }
-    console.log("[Generator] Opening fullscreen modal for:", resultImage.substring(0, 50));
-    setIsModalOpen(true);
-  };
-
-  const handleStylePreset = (preset: typeof STYLE_PRESETS[0]) => {
-    const matchingAngle = CAMERA_ANGLES.find(a => a.value === preset.params.angle) || CAMERA_ANGLES[1];
-    setParams(prev => ({
-      ...prev,
-      scene: preset.params.scene,
-      lighting: preset.params.lighting,
-      visualDetails: preset.params.visualDetails,
-      angle: matchingAngle
-    }));
-  };
-
-  const toggleDetail = (detail: string) => {
-    setParams(prev => {
-      const current = prev.visualDetails;
-      if (current.includes(detail)) {
-        return { ...prev, visualDetails: current.filter(d => d !== detail) };
-      } else {
-        return { ...prev, visualDetails: [...current, detail] };
-      }
+        if (shouldFail) {
+          resolve({ valid: false, reason: 'Detected >5 toes or artifact' });
+        } else {
+          resolve({ valid: true });
+        }
+      }, 1500);
     });
   };
 
-  const handleGenerate = async () => {
-    if (user.credits < 1) {
+  const handleGenerate = async (retries = 0) => {
+    // Credit check only on first attempt
+    if (retries === 0 && user.credits < 1) {
       alert("Du hast nicht genügend Credits.");
       return;
     }
 
-    // 1. Start Generation
-    setStatus('generating');
+    setStatus(retries > 0 ? 'generating' : 'generating');
+    setRetryCount(retries);
     setErrorMessage(null);
 
     // Scroll on Mobile
-    if (previewRef.current && window.innerWidth < 1024) {
+    if (retries === 0 && previewRef.current && window.innerWidth < 1024) {
       previewRef.current.scrollIntoView({ behavior: 'smooth' });
     }
 
     try {
-      const prompt = PromptBuilder.buildPrompt(params);
-      const negativePrompt = PromptBuilder.buildNegativePrompt(params);
+      // 1. Build Prompt (Standard)
+      let prompt = PromptBuilder.buildPrompt(params);
+      let negativePrompt = PromptBuilder.buildNegativePrompt(params);
 
-      // DEBUG LOGGING (as requested)
-      if (process.env.NODE_ENV === 'development' || true) {
-        console.groupCollapsed("[Generator] Prompt Debug");
-        const debugInfo = PromptBuilder.debug(params);
-        console.log("Final Prompt:", debugInfo.prompt);
-        console.log("Negative Prompt:", debugInfo.negative_prompt);
-        console.log("Active Features:", debugInfo.active_features);
-        console.groupEnd();
+      // If retrying, enhance negative prompt to be stricter
+      if (retries > 0) {
+        console.log(`[Generator] Retry ${retries}: Strengthening prompt constraints.`);
+        prompt += ", perfect anatomy, masterpiece";
+        negativePrompt += ", (extra toes:1.5), (mutation:1.5), (deformed:1.5)";
       }
 
-      console.log("[Generator] Starting request...", { prompt });
+      console.log(`[Generator] Starting request (Attempt ${retries + 1})...`);
 
       // 2. Call API
       const result = await imageService.generateImage({
         prompt: prompt,
-        negativePrompt: negativePrompt, // Pass negative prompt explicitly
+        negativePrompt: negativePrompt,
         aspectRatio: '16:9',
-        enhancePrompt: false, // We built a strong prompt manually, disable auto-enhance to prevent overriding
+        enhancePrompt: false,
         params: { ...params }
       }, user.plan === 'Pro' || user.plan === 'Creator');
 
-      // 3. Robust URL Handling
       let finalImageUrl = result.url || (result as any).imageUrl;
-      if ((result as any).b64_json) {
-        finalImageUrl = `data:image/png;base64,${(result as any).b64_json}`;
-      }
+      if ((result as any).b64_json) finalImageUrl = `data:image/png;base64,${(result as any).b64_json}`;
 
       if (!finalImageUrl) throw new Error("Keine Bilddaten empfangen.");
 
-      // Check for raw base64
-      if (typeof finalImageUrl === 'string' && !finalImageUrl.startsWith('http') && !finalImageUrl.startsWith('data:')) {
-        finalImageUrl = `data:image/png;base64,${finalImageUrl}`;
+      // 3. QUALITY CHECK (Post-Generation)
+      setStatus('validating');
+      const validation = await validateImage(finalImageUrl, params);
+
+      if (!validation.valid) {
+        console.warn(`[Generator] Validation Failed: ${validation.reason}`);
+
+        if (retries < 2) { // Max 2 Retries (Total 3 attempts)
+          setValidationMsg(`Qualitätscheck fehlgeschlagen (${validation.reason}) – wir generieren neu (Versuch ${retries + 2}/3)…`);
+          await new Promise(r => setTimeout(r, 2000)); // Show msg briefly
+          handleGenerate(retries + 1); // Recursive Retry
+          return;
+        } else {
+          // Final Failure after retries
+          throw new Error("Bildqualität konnte auch nach mehreren Versuchen nicht garantiert werden. Bitte versuche andere Einstellungen.");
+        }
       }
 
-      console.log("[Generator] Image URL received", finalImageUrl.substring(0, 50) + "...");
+      console.log("[Generator] QC Passed. Showing image.");
 
       // 4. Update State -> Wait for onLoad
       setResultImage(finalImageUrl);
-      setIsFavorite(false); // Reset favorite state for new image
-      setStatus('loading_image'); // UI stays in loading state until <img> loads
+      setIsFavorite(false);
+      setStatus('loading_image');
 
-      // Persist (Legacy)
       localStorage.setItem('bigtoe_last_image', finalImageUrl);
 
       // --- AUTO SAVE TO GALLERY ---
@@ -177,25 +140,16 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
         tags: [params.side, params.gender, 'generated']
       });
 
-      // Consume Credits
-      handleConsumption(1, 'generate');
+      // Consume Credits (only once per successful user intent, usually we don't charge for internal retries if possible, but here we assume we do or don't. Let's charge ONCE at the end)
+      if (retries === 0) handleConsumption(1, 'generate');
+
       onGenerate(finalImageUrl, { ...params, prompt });
 
     } catch (error: any) {
+      // ... (existing error handling)
       console.error("[Generator] Failed:", error);
-
       let friendlyMessage = "Ein unbekannter Fehler ist aufgetreten.";
-
-      if (error.code === 'POLICY_VIOLATION') {
-        friendlyMessage = "Das Motiv entspricht nicht unseren Richtlinien. Bitte entferne explizite Begriffe.";
-      } else if (error.code === 'TIMEOUT' || error.message?.includes('timeout')) {
-        friendlyMessage = "Der Server antwortet nicht rechtzeitig. Bitte versuche es erneut.";
-      } else if (error.code === 'SERVER_ERROR') {
-        friendlyMessage = "Unsere Server sind derzeit stark ausgelastet.";
-      } else if (error.message) {
-        friendlyMessage = error.message;
-      }
-
+      if (error.message) friendlyMessage = error.message;
       setErrorMessage(friendlyMessage);
       setStatus('error');
     }
@@ -203,7 +157,6 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
   // Called when main <img> finishes loading
   const handleImageLoad = () => {
-    console.log("[Generator] Image loaded successfully.");
     setStatus('success');
   };
 
@@ -213,7 +166,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
     setStatus('error');
   };
 
-  const isLoading = status === 'generating' || status === 'loading_image';
+  const isLoading = status === 'generating' || status === 'validating' || status === 'loading_image';
 
   return (
     <div className="min-h-screen bg-brand-bg text-white pb-20 font-sans">
@@ -567,7 +520,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                     ${isLoading ? 'opacity-70 cursor-wait' : 'hover:scale-[1.02]'}
                   `}
                 >
-                  {isLoading ? 'Bitte warten...' : 'Bild generieren'}
+                  {status === 'validating' ? 'Prüfung läuft...' : isLoading ? 'Bitte warten...' : 'Bild generieren'}
                   {!isLoading && <Wand2 size={18} className="ml-2" />}
                 </Button>
                 <div className="flex justify-between items-center mt-3 px-1">

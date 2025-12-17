@@ -168,6 +168,17 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
   const isLoading = status === 'generating' || status === 'validating' || status === 'loading_image';
 
+  // Handler for Quick Styles
+  const handleStylePreset = (preset: typeof STYLE_PRESETS[0]) => {
+    setParams(prev => ({
+      ...prev,
+      scene: preset.params.scene,
+      lighting: preset.params.lighting,
+      visualDetails: preset.params.visualDetails,
+      angle: preset.params.angle ? CAMERA_ANGLES.find(a => a.value === preset.params.angle) || prev.angle : prev.angle
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-brand-bg text-white pb-20 font-sans">
       <div className="max-w-[1800px] mx-auto px-4 md:px-6 py-6" id="generator-top">

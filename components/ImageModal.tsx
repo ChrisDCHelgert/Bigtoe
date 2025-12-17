@@ -37,7 +37,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose, title
     const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.5));
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-md">
             {/* Close button */}
             <button
                 onClick={onClose}

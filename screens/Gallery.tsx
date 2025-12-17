@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Search, Filter, ArrowLeft, Star, Trash2 } from 'lucide-react';
 
+import { FavoritesService } from '../services/FavoritesService';
+
 interface GalleryProps {
   images?: any[];
   onToggleFavorite?: (id: string) => void;
@@ -11,16 +13,35 @@ interface GalleryProps {
 export const Gallery: React.FC<GalleryProps> = ({ images = [], onToggleFavorite, onDelete }) => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('All');
+  const [favorites, setFavorites] = useState(FavoritesService.getFavorites());
   const tabs = ['All', 'Favorites', 'Soles', 'Arches'];
 
-  // Mock Data Combined with Real Data (Mock ignored for logic simplicity or assumed read-only)
-  // To make delete work for mock, we'd need them in global state, but for now let's just show Real Images prioritized
-  // or just filter Real Images for functionality verification.
-  const displayImages = images.filter(img => {
+  // Refresh favorites on mount and periodically check/sync? 
+  // For simplicity, we assume this component remounts or we can add a listener logic later.
+  // We'll merge Props Images (mock) with Local Favorites.
+
+  // Convert local favorites to compatible image objects
+  const localFavImages = favorites.map(f => ({
+    id: f.id,
+    url: f.url,
+    isFavorite: true,
+    tag: 'Saved'
+  }));
+
+  // Merge: Prefer local favorites for the 'Favorites' tab.
+  // For 'All', we show everything.
+  const combinedImages = [...localFavImages, ...images];
+
+  const displayImages = combinedImages.filter(img => {
     if (filter === 'All') return true;
-    if (filter === 'Favorites') return img.isFavorite;
+    if (filter === 'Favorites') return img.isFavorite; // This relies on the flag being correct
     return img.tags?.includes(filter) || img.tag === filter;
   });
+
+  const handleToggleFav = (url: string) => {
+    FavoritesService.toggleFavorite(url);
+    setFavorites(FavoritesService.getFavorites()); // Refresh local state
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -79,7 +100,7 @@ export const Gallery: React.FC<GalleryProps> = ({ images = [], onToggleFavorite,
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
               <div className="flex justify-end gap-2">
                 <button
-                  onClick={(e) => { e.stopPropagation(); onToggleFavorite && onToggleFavorite(img.id); }}
+                  onClick={(e) => { e.stopPropagation(); handleToggleFav(img.url); }}
                   className={`p-2 rounded-full backdrop-blur-md ${img.isFavorite ? 'bg-yellow-500 text-white' : 'bg-black/50 text-white hover:bg-yellow-500/50'}`}
                 >
                   <Star size={14} fill={img.isFavorite ? "currentColor" : "none"} />

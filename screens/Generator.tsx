@@ -25,6 +25,10 @@ interface GeneratorProps {
   onGenerate: (imageUrl: string, metadata: any) => void;
 }
 
+import { FavoritesService } from '../services/FavoritesService';
+
+// ... imports remain the same
+
 export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, onGenerate }) => {
   // --- STATE MANAGEMENT ---
   const [status, setStatus] = useState<'idle' | 'generating' | 'loading_image' | 'success' | 'error'>('idle');
@@ -49,18 +53,26 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
   const previewRef = useRef<HTMLDivElement>(null);
 
   // --- HARD RESET (V5.0) ---
-  // No auto-loading from localStorage. Always start fresh.
+  // Explicitly clear local storage for the last image to ensure separate sessions don't bleed over
+  // AND ensure we start empty.
+  useEffect(() => {
+    localStorage.removeItem('bigtoe_last_image');
+    setResultImage(null);
+    setStatus('idle');
+    console.log("[Generator] Hard Reset applied: State cleared.");
+  }, []);
 
   // --- FAVORITES LOGIC ---
   const toggleFavorite = () => {
     if (!resultImage) return;
-    const newState = !isFavorite;
-    setIsFavorite(newState);
 
-    // In a real app, save to backend/localStorage array
-    // For now, we just toggle UI state
-    if (newState) {
-      console.log("Saved to favorites:", resultImage);
+    // Use Service
+    const isNowFavorite = FavoritesService.toggleFavorite(resultImage);
+    setIsFavorite(isNowFavorite);
+
+    if (isNowFavorite) {
+      // Optional: Animation or Toast
+      console.log("Added to favorites via Service");
     }
   };
 
@@ -132,6 +144,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
       // 4. Update State -> Wait for onLoad
       setResultImage(finalImageUrl);
+      setIsFavorite(false); // Reset favorite state for new image
       setStatus('loading_image'); // UI stays in loading state until <img> loads
 
       // Persist

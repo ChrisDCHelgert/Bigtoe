@@ -15,7 +15,11 @@ import {
   FOOT_SIDES,
   STYLE_PRESETS,
   STYLE_VIBES,
-  ACTION_MOMENTS
+  ACTION_MOMENTS,
+  TATTOO_OPTIONS,
+  JEWELRY_OPTIONS,
+  BONDAGE_OPTIONS,
+  NAIL_COLORS
 } from '../constants';
 import { UserProfile } from '../types';
 import { StylePresetSelector } from '../components/StylePresetSelector';
@@ -52,6 +56,13 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
     lighting: LIGHTING_CHIPS[0],
     styleVibe: '',
     actionMoment: '',
+
+    // V3 Defaults
+    tattoos: { enabled: false, motif: 'Tribal', placement: ['dorsum'], intensity: 'Dezent' },
+    jewelry: { enabled: false, type: 'Fußkettchen', materials: 'Gold', style: 'Normal' },
+    bondage: { enabled: false, level: 'light', material: 'Seil (Jute)', color: 'Natur' },
+    nails: { enabled: false, color: 'Rot', finish: 'Glossy', french: false, frenchBase: 'Nude' },
+
     quality: 'standard'
   });
 
@@ -242,7 +253,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
         </div>
 
         {/* MAIN GRID - FIXED HEIGHT & SYMMETRY (Studio Layout) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start h-[calc(100vh-220px)] min-h-[700px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start h-[calc(100vh-220px)] min-h-[600px]">
 
           {/* LEFT: CONTROLS (8 Cols) */}
           <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
@@ -355,87 +366,194 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
               </div>
             </div>
 
-            {/* COLUMN B: Details & Vibe */}
-            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl overflow-y-auto custom-scrollbar h-full flex flex-col gap-6">
+            {/* COLUMN B: Details & Vibe (Compact Accordion) */}
+            <div className="bg-brand-card p-4 rounded-2xl border border-white/5 shadow-xl overflow-y-auto custom-scrollbar h-full flex flex-col gap-4">
               <h3 className="text-xs font-bold uppercase text-gray-400 mb-1 flex items-center gap-2 tracking-wider">
-                <Sliders size={14} /> Details
+                <Sliders size={14} /> Styling & Details
               </h3>
 
-              {/* Shape */}
-              <div>
-                <label className="text-[10px] font-bold text-brand-primary uppercase mb-3 block flex items-center gap-2 opacity-80">
-                  <Footprints size={12} /> {VISUAL_DETAIL_GROUPS.shape.label}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {VISUAL_DETAIL_GROUPS.shape.options.map(opt => (
-                    <button
-                      key={opt}
-                      onClick={() => toggleDetail(opt)}
-                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-all border ${params.visualDetails.includes(opt)
-                        ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_8px_rgba(168,85,247,0.2)]'
-                        : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300'
-                        }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
+              {/* 1. NAILS (Priority) */}
+              <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-xs font-bold text-white flex items-center gap-2">
+                    <Sparkles size={12} className="text-pink-400" /> Nägel & Lack
+                  </label>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={params.nails?.enabled} onChange={(e) => setParams({ ...params, nails: { ...params.nails!, enabled: e.target.checked } })} />
+                    <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500"></div>
+                  </label>
                 </div>
+
+                {params.nails?.enabled && (
+                  <div className="mt-3 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                    {/* Type: Full vs French */}
+                    <div className="flex gap-2">
+                      <button onClick={() => setParams({ ...params, nails: { ...params.nails!, french: false } })} className={`flex-1 py-1.5 text-[10px] rounded-lg border ${!params.nails?.french ? 'bg-pink-500/20 border-pink-500 text-white' : 'border-white/10 text-gray-400'}`}>Full Color</button>
+                      <button onClick={() => setParams({ ...params, nails: { ...params.nails!, french: true } })} className={`flex-1 py-1.5 text-[10px] rounded-lg border ${params.nails?.french ? 'bg-pink-500/20 border-pink-500 text-white' : 'border-white/10 text-gray-400'}`}>French Tips</button>
+                    </div>
+
+                    {/* Color Picker */}
+                    {!params.nails?.french && (
+                      <div className="flex flex-wrap gap-2">
+                        {NAIL_COLORS.map(c => (
+                          <button
+                            key={c.name}
+                            onClick={() => setParams({ ...params, nails: { ...params.nails!, color: c.name } })}
+                            className={`w-6 h-6 rounded-full border border-white/20 transition-transform hover:scale-110 ${params.nails?.color === c.name ? 'ring-2 ring-white scale-110' : ''}`}
+                            style={{ backgroundColor: c.hex }}
+                            title={c.name}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Finish / French Base */}
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] text-gray-400">{params.nails?.french ? 'Base Color' : 'Finish'}</span>
+                      <select
+                        className="bg-black/40 border-white/10 text-[10px] rounded px-2 py-1 outline-none text-white"
+                        value={params.nails?.french ? params.nails?.frenchBase : params.nails?.finish}
+                        onChange={(e) => setParams({
+                          ...params,
+                          nails: {
+                            ...params.nails!,
+                            ...(params.nails?.french ? { frenchBase: e.target.value } : { finish: e.target.value })
+                          }
+                        })}
+                      >
+                        {params.nails?.french
+                          ? ['Nude', 'Pinkish', 'Transparent'].map(o => <option key={o} value={o}>{o}</option>)
+                          : ['Glossy', 'Matte', 'Metallic'].map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Texture */}
-              <div>
-                <label className="text-[10px] font-bold text-brand-primary uppercase mb-3 block flex items-center gap-2 opacity-80">
-                  <Layers size={12} /> {VISUAL_DETAIL_GROUPS.texture.label}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {VISUAL_DETAIL_GROUPS.texture.options.map(opt => (
-                    <button
-                      key={opt}
-                      onClick={() => toggleDetail(opt)}
-                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-all border ${params.visualDetails.includes(opt)
-                        ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_8px_rgba(168,85,247,0.2)]'
-                        : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300'
-                        }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* 2. TATTOOS (Accordion) */}
+              <details className="group bg-black/20 rounded-xl border border-white/5 overflow-hidden">
+                <summary className="p-3 cursor-pointer flex justify-between items-center text-xs font-bold text-gray-400 group-open:text-brand-primary transition-colors select-none">
+                  <span className="flex items-center gap-2"><Layers size={12} /> Tattoos</span>
+                  <div className="flex items-center gap-3">
+                    <label className="relative inline-flex items-center cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                      <input type="checkbox" className="sr-only peer" checked={params.tattoos?.enabled} onChange={(e) => setParams({ ...params, tattoos: { ...params.tattoos!, enabled: e.target.checked } })} />
+                      <div className="w-7 h-4 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                  </div>
+                </summary>
+                {params.tattoos?.enabled && (
+                  <div className="p-3 pt-0 border-t border-white/5 space-y-3">
+                    <Select
+                      label="Motiv"
+                      options={TATTOO_OPTIONS.motifs.map(m => ({ value: m, label: m }))}
+                      value={params.tattoos?.motif}
+                      onChange={(e) => setParams({ ...params, tattoos: { ...params.tattoos!, motif: e.target.value } })}
+                      fullWidth
+                      className="text-[10px] p-2"
+                    />
+                    <div>
+                      <span className="text-[10px] text-gray-500 block mb-1">Platzierung</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {TATTOO_OPTIONS.placements.map(p => (
+                          <button
+                            key={p.id}
+                            onClick={() => {
+                              const old = params.tattoos?.placement || [];
+                              const clean = old.includes(p.id) ? old.filter(x => x !== p.id) : [...old, p.id];
+                              setParams({ ...params, tattoos: { ...params.tattoos!, placement: clean } });
+                            }}
+                            className={`px-2 py-1 rounded border text-[10px] ${params.tattoos?.placement.includes(p.id) ? 'bg-purple-500/30 border-purple-500 text-white' : 'border-white/10 text-gray-500'}`}
+                          >
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </details>
 
-              {/* Style */}
-              <div>
-                <label className="text-[10px] font-bold text-brand-primary uppercase mb-3 block flex items-center gap-2 opacity-80">
-                  <Sparkles size={12} /> {VISUAL_DETAIL_GROUPS.style.label}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {VISUAL_DETAIL_GROUPS.style.options.map(opt => (
-                    <button
-                      key={opt}
-                      onClick={() => toggleDetail(opt)}
-                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-all border ${params.visualDetails.includes(opt)
-                        ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_8px_rgba(168,85,247,0.2)]'
-                        : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300'
-                        }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
+              {/* 3. JEWELRY & BONDAGE (Accordion) */}
+              <details className="group bg-black/20 rounded-xl border border-white/5 overflow-hidden">
+                <summary className="p-3 cursor-pointer flex justify-between items-center text-xs font-bold text-gray-400 group-open:text-brand-primary transition-colors select-none">
+                  <span className="flex items-center gap-2"><Sparkles size={12} /> Schmuck & Bondage</span>
+                  <span className="text-[10px] bg-white/5 px-1.5 rounded">{params.jewelry?.enabled || params.bondage?.enabled ? 'Aktiv' : 'Inaktiv'}</span>
+                </summary>
+                <div className="p-3 pt-0 border-t border-white/5 space-y-4">
+
+                  {/* Jewelry Control */}
+                  <div className="space-y-2 pt-2">
+                    <div className="flex justify-between">
+                      <span className="text-[10px] uppercase font-bold text-gray-500">Fußschmuck</span>
+                      <input type="checkbox" checked={params.jewelry?.enabled} onChange={(e) => setParams({ ...params, jewelry: { ...params.jewelry!, enabled: e.target.checked } })} className="accent-brand-primary" />
+                    </div>
+                    {params.jewelry?.enabled && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <Select options={JEWELRY_OPTIONS.types.map(t => ({ value: t, label: t }))} value={params.jewelry?.type} onChange={(e) => setParams({ ...params, jewelry: { ...params.jewelry!, type: e.target.value } })} className="text-[10px] p-1.5" />
+                        <Select options={JEWELRY_OPTIONS.materials.map(m => ({ value: m, label: m }))} value={params.jewelry?.materials} onChange={(e) => setParams({ ...params, jewelry: { ...params.jewelry!, materials: e.target.value } })} className="text-[10px] p-1.5" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bondage Control */}
+                  <div className="space-y-2 border-t border-white/5 pt-2">
+                    <div className="flex justify-between">
+                      <span className="text-[10px] uppercase font-bold text-gray-500">Bondage / Ropes</span>
+                      <input type="checkbox" checked={params.bondage?.enabled} onChange={(e) => setParams({ ...params, bondage: { ...params.bondage!, enabled: e.target.checked } })} className="accent-brand-primary" />
+                    </div>
+                    {params.bondage?.enabled && (
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          {BONDAGE_OPTIONS.levels.map(l => (
+                            <button key={l.id} onClick={() => setParams({ ...params, bondage: { ...params.bondage!, level: l.id } })} className={`flex-1 py-1 text-[10px] border rounded ${params.bondage?.level === l.id ? 'bg-red-900/40 border-red-500 text-red-200' : 'border-white/10 text-gray-500'}`}>{l.label}</button>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Select options={BONDAGE_OPTIONS.materials.map(m => ({ value: m, label: m }))} value={params.bondage?.material} onChange={(e) => setParams({ ...params, bondage: { ...params.bondage!, material: e.target.value } })} className="text-[10px] p-1.5" />
+                          <Select options={BONDAGE_OPTIONS.colors.map(c => ({ value: c, label: c }))} value={params.bondage?.color} onChange={(e) => setParams({ ...params, bondage: { ...params.bondage!, color: e.target.value } })} className="text-[10px] p-1.5" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              {/* VIBE (New) */}
-              <div>
-                <label className="text-[10px] font-bold text-brand-primary uppercase mb-3 block flex items-center gap-2 opacity-80">
+              </details>
+
+              {/* 4. VISUAL BASICS (Shape/Texture) */}
+              <details className="group bg-black/20 rounded-xl border border-white/5 overflow-hidden" open>
+                <summary className="p-3 cursor-pointer flex justify-between items-center text-xs font-bold text-gray-400 group-open:text-brand-primary transition-colors select-none">
+                  <span className="flex items-center gap-2"><Footprints size={12} /> Form & Textur</span>
+                </summary>
+                <div className="p-3 pt-0 border-t border-white/5 space-y-3">
+                  {/* Simplified Shape & Texture Tags */}
+                  <div className="flex flex-wrap gap-1.5 pt-2">
+                    {[...VISUAL_DETAIL_GROUPS.shape.options, ...VISUAL_DETAIL_GROUPS.texture.options].map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => toggleDetail(opt)}
+                        className={`px-2 py-1 rounded text-[10px] transition-all border ${params.visualDetails.includes(opt)
+                          ? 'bg-brand-primary/20 border-brand-primary text-white'
+                          : 'bg-black/20 border-white/5 text-gray-400 hover:text-gray-300'}`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </details>
+
+              {/* 5. VIBE */}
+              <div className="pt-2">
+                <label className="text-[10px] font-bold text-brand-primary uppercase mb-2 block flex items-center gap-2 opacity-80">
                   <Sparkles size={12} /> Vibe / Atmosphäre
                 </label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {STYLE_VIBES.map(v => (
                     <button
                       key={v.id}
                       onClick={() => setParams(p => ({ ...p, styleVibe: p.styleVibe === v.id ? '' : v.id }))}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wide uppercase transition-all border ${params.styleVibe === v.id
-                        ? 'bg-purple-900/40 border-purple-500 text-purple-200 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
-                        : 'bg-black/40 border-white/5 text-gray-500 hover:text-gray-300'
+                      className={`px-2 py-1 rounded border text-[10px] ${params.styleVibe === v.id
+                        ? 'bg-purple-900/40 border-purple-500 text-purple-200'
+                        : 'bg-black/40 border-white/5 text-gray-500'
                         }`}
                       title={v.diff}
                     >
@@ -444,6 +562,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                   ))}
                 </div>
               </div>
+
             </div>
 
             {/* COLUMN C: Scene & Action */}

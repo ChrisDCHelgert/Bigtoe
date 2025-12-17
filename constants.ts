@@ -52,7 +52,7 @@ export const SKIN_TONE_PRESETS = [
 export const VISUAL_DETAIL_GROUPS = {
   shape: {
     label: 'Form & Zehen',
-    options: ['Lange Zehen', 'Kurze Zehen', 'Zehenspreizung', 'Hoher Spann', 'Flache Sohle']
+    options: ['Lange Zehen', 'Kurze Zehen', 'Zehenspreizung', 'Hoher Spann', 'Flache Sohle', 'Breiter Fuß']
   },
   texture: {
     label: 'Haut & Textur',
@@ -60,7 +60,7 @@ export const VISUAL_DETAIL_GROUPS = {
   },
   style: {
     label: 'Stil & Extras',
-    options: ['Lackierte Nägel', 'French Tips', 'Fußkettchen', 'Tätowiert', 'Nass/Ölig']
+    options: ['Nass/Ölig']
   }
 };
 
@@ -150,6 +150,48 @@ export const STYLE_VIBES = [
   { id: 'dark', label: 'Dark Aesthetic', diff: 'low key lighting, deep shadows, mysterious, goth aesthetic' },
   { id: 'luxury', label: 'Luxury / High-End', diff: 'clean editorial look, expensive atmosphere, perfect grooming, softbox lighting' },
   { id: 'natural', label: 'Natural / Raw', diff: 'ungroomed, authentic skin texture, daylight, imperfect realism, raw photo' }
+];
+
+// Tattoos
+export const TATTOO_OPTIONS = {
+  motifs: ['Tribal', 'Mandala / Ornamental', 'Minimal Line', 'Floral', 'Symbol / Rune', 'Skull / Dark'],
+  placements: [
+    { id: 'dorsum', label: 'Fußrücken' },
+    { id: 'ankle_outer', label: 'Knöchel außen' },
+    { id: 'ankle_inner', label: 'Knöchel innen' },
+    { id: 'toes', label: 'Zehenbereich (sparsam)' }
+  ]
+};
+
+// Jewelry
+export const JEWELRY_OPTIONS = {
+  types: ['Fußkettchen', 'Zehenring', 'Beides'],
+  materials: ['Gold', 'Silber', 'Roségold', 'Schwarz (Metal)'],
+  styles: ['Dünn/Filigran', 'Normal', 'Chunky']
+};
+
+// Bondage / Ropes
+export const BONDAGE_OPTIONS = {
+  levels: [
+    { id: 'light', label: 'Leicht (Seil/Straps dezent)' },
+    { id: 'medium', label: 'Medium (sichtbar, aber clean)' }
+  ],
+  materials: ['Seil (Jute)', 'Satinband', 'Lederstrap'],
+  colors: ['Schwarz', 'Rot', 'Natur', 'Weiß']
+};
+
+// Nails
+export const NAIL_COLORS = [
+  { name: 'Rot', hex: '#D32F2F' },
+  { name: 'Bordeaux', hex: '#880E4F' },
+  { name: 'Nude', hex: '#E0C0A8' },
+  { name: 'Schwarz', hex: '#000000' },
+  { name: 'Weiß', hex: '#FFFFFF' },
+  { name: 'Pink', hex: '#E91E63' },
+  { name: 'Blau', hex: '#1976D2' },
+  { name: 'Grün', hex: '#388E3C' },
+  { name: 'Gold', hex: '#FFD700' },
+  { name: 'Silber', hex: '#C0C0C0' }
 ];
 
 // NEW: Actions / Moments

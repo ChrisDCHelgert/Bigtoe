@@ -10,8 +10,37 @@ export interface PromptSettings {
     visualDetails: string[];
     scene: string;
     lighting: string;
-    styleVibe?: string; // ID of STYLE_VIBES
-    actionMoment?: string; // ID of ACTION_MOMENTS
+    styleVibe?: string;
+    actionMoment?: string;
+
+    // V3 New States
+    tattoos?: {
+        enabled: boolean;
+        motif: string;
+        placement: string[];
+        intensity: string;
+    };
+    jewelry?: {
+        enabled: boolean;
+        type: string;
+        materials: string; // "Gold", "Silver", etc.
+        style: string;
+    };
+    bondage?: {
+        enabled: boolean;
+        level: string; // "light", "medium"
+        material: string;
+        color: string;
+    };
+    nails?: {
+        enabled: boolean;
+        color: string;
+        finish: string;
+        french: boolean;
+        frenchColor?: string;
+        frenchBase?: string;
+    };
+
     quality?: 'standard' | 'high' | 'studio';
 }
 
@@ -31,12 +60,6 @@ const STRICT_FEATURES: Record<string, { pos: string, neg: string }> = {
     'Faltige Sohlen': { pos: '(wrinkled soles:1.5), deep skin folds, highly textured soles, mature skin', neg: 'wrinkled soles, deep folds, mature skin' },
     'Aderig': { pos: '(veiny feet:1.4), visible veins, vascular skin, realistic vascularity, anatomically correct veins', neg: 'veiny, vascular, veins' },
     'Natürlicher Look': { pos: 'raw photo, natural skin texture, less makeup, real skin pores, slight imperfections', neg: 'makeup, airbrushed, plastic skin' },
-
-    // STYLE
-    'Lackierte Nägel': { pos: '(painted toenails:1.5), shiny nail polish, pedicure, vibrant color', neg: 'painted nails, nail polish, pedicure' },
-    'French Tips': { pos: '(french tip pedicure:1.5), white tip nails, natural base, manicured toes', neg: 'french tips, painted nails' },
-    'Fußkettchen': { pos: '(wearing anklet:1.5), gold chain around ankle, foot jewelry', neg: 'jewelry, anklet, bracelet, ring, metal' },
-    'Tätowiert': { pos: '(tattoo on foot:1.5), ink design on skin, artistic tattoo', neg: 'tattoo, ink, drawing on skin' },
     'Nass/Ölig': { pos: '(wet skin:1.4), shiny oily skin, glossy texture, baby oil, covered in oil', neg: 'oily, wet, sweat' }
 };
 
@@ -116,6 +139,38 @@ export const PromptBuilder = {
             if (vibe) segments.push(vibe.diff);
         }
 
+        // 7. NAILS (V3) - Explicit Color Logic
+        if (settings.nails?.enabled) {
+            if (settings.nails.french) {
+                segments.push(`(french pedicure:1.5), white tips, ${settings.nails.frenchBase || 'nude'} base, manicured toes`);
+            } else {
+                segments.push(`(${settings.nails.color} nail polish:1.5), ${settings.nails.finish} finish pedicure`);
+            }
+        } else {
+            // If nails NOT enabled, maybe enforce natural? Or explicitly "unpainted"?
+            // User didn't request "explicit unpainted" but "explicit color if active".
+            // Let's add "natural nails" if no color selected to avoid random polish?
+            // segments.push('natural unpainted toenails');
+        }
+
+        // 8. TATTOOS (V3)
+        if (settings.tattoos?.enabled) {
+            const places = settings.tattoos.placement ? settings.tattoos.placement.join(' and ') : 'foot';
+            segments.push(`(tattoo on ${places}:1.4), ${settings.tattoos.motif} style tattoo, ${settings.tattoos.intensity} ink`);
+        } else {
+            // Explicit Negative handled in buildNegative
+        }
+
+        // 9. JEWELRY (V3)
+        if (settings.jewelry?.enabled) {
+            segments.push(`(wearing ${settings.jewelry.type}:1.4), ${settings.jewelry.materials} material, ${settings.jewelry.style} style jewelry`);
+        }
+
+        // 10. BONDAGE (V3)
+        if (settings.bondage?.enabled) {
+            segments.push(`(shibari foot bondage:1.3), ${settings.bondage.level} restraint, ${settings.bondage.color} ${settings.bondage.material} ropes`);
+        }
+
         if (settings.actionMoment) {
             const action = ACTION_MOMENTS.find(a => a.id === settings.actionMoment);
             if (action) segments.push(action.prompt);
@@ -160,57 +215,33 @@ export const PromptBuilder = {
         // If it is NOT in settings.visualDetails, we add its NEGATIVE rule.
         const activeDetails = settings.visualDetails || [];
 
-        Object.keys(STRICT_FEATURES).forEach(featureName => {
-            const rules = STRICT_FEATURES[featureName];
-
-            // Check if this feature is "Style/Texture" that should be excluded if not present.
-            // Some features like "Shape" (Long/Short toes) are mutually exclusive but 'normal' is default.
-            // We focus on optional additions: Polish, Jewelry, Tattoos, Oil, Wrinkles (if smooth preferred), etc.
-
-            // Logic: Is this feature active?
-            const isActive = activeDetails.includes(featureName);
-
-            // Special Handling per Group to avoid logic errors (e.g. don't negate "short toes" just because "long toes" not selected, unless "short toes" also not selected, leading to "normal")
-            // BUT: For "Add-ons" like Polish, Tattoo, Jewelry -> STRICT EXCLUDE.
-
-            if (featureName === 'Lackierte Nägel' || featureName === 'French Tips') {
-                if (!isActive && !activeDetails.includes('Lackierte Nägel') && !activeDetails.includes('French Tips')) {
-                    // Only add no-polish if NEITHER is selected
-                    // We avoid duplicates by checking if we already added it? No, Set handles that or we just add.
-                    // simpler: if current key is Lackierte Nägel and it's missing, check if French is there.
-                }
-            }
-
-        });
-
-        // Simpler Manual Exclusion based on categories (Robust)
-
-        // Polish
-        if (!activeDetails.includes('Lackierte Nägel') && !activeDetails.includes('French Tips')) {
-            negs.push(STRICT_FEATURES['Lackierte Nägel'].neg); // 'painted nails, nail polish'
-            negs.push(STRICT_FEATURES['French Tips'].neg);
+        // Tattoos Negative
+        if (!settings.tattoos?.enabled) {
+            negs.push('tattoos, ink, drawing on skin, permanent marker');
         }
 
-        // Jewelry
-        if (!activeDetails.includes('Fußkettchen')) {
-            negs.push(STRICT_FEATURES['Fußkettchen'].neg);
+        // Jewelry Negative
+        if (!settings.jewelry?.enabled) {
+            negs.push('jewelry, anklet, bracelet, ring, chain, metal, gold, silver');
         }
 
-        // Tattoos
-        if (!activeDetails.includes('Tätowiert')) {
-            negs.push(STRICT_FEATURES['Tätowiert'].neg);
+        // Bondage Negative
+        if (!settings.bondage?.enabled) {
+            negs.push('ropes, bondage, shibari, straps, leather, restraint');
         }
 
-        // Wet/Oil
+        // Nail Polish Negative (if strictly not enabled)
+        if (!settings.nails?.enabled) {
+            negs.push('nail polish, painted nails, pedicure, red nails, black nails');
+        }
+
+        // Wet/Oil Negative
         if (!activeDetails.includes('Nass/Ölig')) {
             negs.push(STRICT_FEATURES['Nass/Ölig'].neg);
         }
 
-        // Veins (If not requested, prefer smooth? Or just don't force it? User said "Was nicht ausgewählt ist, darf NICHT erscheinen")
-        // If "Aderig" not selected, we add "veiny" to negative?
-        // Maybe too strict for "Natural Look", but let's try to follow "UI = Truth".
+        // Veins
         if (!activeDetails.includes('Aderig')) {
-            // Careful: Don't make them plastic. But prevent "Excessive veins".
             // negs.push('excessive veins, bulging veins'); 
         }
 

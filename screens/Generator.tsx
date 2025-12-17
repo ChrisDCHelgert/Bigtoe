@@ -490,7 +490,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                       alt="Generated"
                       onLoad={handleImageLoad}
                       onError={handleImageError}
-                      onClick={() => setIsModalOpen(true)}
+                      onClick={() => resultImage && setIsModalOpen(true)}
                       className={`w-full h-full object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'} cursor-zoom-in`}
                     />
 
@@ -504,7 +504,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                         <Heart size={14} className={isFavorite ? "fill-current" : ""} />
                       </Button>
                       <Button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => resultImage && setIsModalOpen(true)}
                         size="sm" variant="secondary"
                         className="backdrop-blur-md bg-white/10 border-white/20 pointer-events-auto"
                       >

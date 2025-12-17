@@ -81,14 +81,14 @@ export const PromptBuilder = {
         // 1. SUBJECT & SIDE (The most critical part)
         const genderTerm = settings.gender === 'diverse' ? 'person' : (settings.gender === 'male' ? 'man' : 'woman');
 
-        // Strict Side Logic
+        // Strict Side Logic (Semantic only - requested V4)
         if (settings.side === 'left') {
             segments.push(`(single standalone left ${genderTerm} foot:1.6)`);
-            segments.push('anatomically correct left foot: big toe on right side, pinky toe on left side');
+            segments.push('anatomically correct left foot, distinct left foot anatomy');
             segments.push('exactly one foot, no second foot, solitary foot');
         } else if (settings.side === 'right') {
             segments.push(`(single standalone right ${genderTerm} foot:1.6)`);
-            segments.push('anatomically correct right foot: big toe on left side, pinky toe on right side');
+            segments.push('anatomically correct right foot, distinct right foot anatomy');
             segments.push('exactly one foot, no second foot, solitary foot');
         } else {
             segments.push(`(pair of ${genderTerm} feet:1.5)`);
@@ -190,7 +190,8 @@ export const PromptBuilder = {
 
         // 1. Base Quality & Anatomy
         negs.push(NEGATIVE_PROMPTS.base);
-        negs.push('extra toes, missing toes, fused toes, mutated toes, more than 5 toes, less than 5 toes');
+        negs.push('extra toes, six toes, duplicated toes, malformed foot, extra foot, mirrored anatomy'); // Req V4
+        negs.push('missing toes, fused toes, mutated toes, more than 5 toes, less than 5 toes');
         negs.push('double big toe, wrong toe order, impossible anatomy, twisted toes, deformed shape, unnatural arch, bad proportions');
         negs.push('claws, animal feet, paw');
 

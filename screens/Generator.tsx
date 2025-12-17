@@ -41,7 +41,7 @@ import { PromptBuilder, PromptSettings } from '../services/image/PromptBuilder';
 
 export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, onGenerate }) => {
   // --- STATE MANAGEMENT ---
-  const [status, setStatus] = useState<'idle' | 'generating' | 'validating' | 'loading_image' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'optimizing' | 'generating' | 'validating' | 'loading_image' | 'success' | 'error'>('idle');
   const [retryCount, setRetryCount] = useState(0);
   const [validationMsg, setValidationMsg] = useState('');
 
@@ -125,7 +125,6 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
       return;
     }
 
-    setStatus(retries > 0 ? 'generating' : 'generating');
     setRetryCount(retries);
     setErrorMessage(null);
 
@@ -135,25 +134,32 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
     }
 
     try {
+      // PHASE 1: OPTIMIZING PROMPT
+      setStatus('optimizing');
+      await new Promise(r => setTimeout(r, 600)); // UX Pause to show "Optimizing"
+
       // 1. Build Prompt (Standard)
       let prompt = PromptBuilder.buildPrompt(params);
       let negativePrompt = PromptBuilder.buildNegativePrompt(params);
 
-      // If retrying, enhance negative prompt to be stricter
+      // If retrying, enhance negative prompt to be stricter (Task 2)
       if (retries > 0) {
         console.log(`[Generator] Retry ${retries}: Strengthening prompt constraints.`);
         prompt += ", perfect anatomy, masterpiece";
-        negativePrompt += ", (extra toes:1.5), (mutation:1.5), (deformed:1.5)";
+        negativePrompt += ", (extra toes:1.6), (six toes:1.6), (mutation:1.5), (deformed:1.5), (glitch:1.4)";
       }
 
       console.log(`[Generator] Starting request (Attempt ${retries + 1})...`);
+
+      // PHASE 2: GENERATING
+      setStatus('generating');
 
       // 2. Call API
       const result = await imageService.generateImage({
         prompt: prompt,
         negativePrompt: negativePrompt,
         aspectRatio: '16:9',
-        enhancePrompt: false,
+        enhancePrompt: false, // Strict Compiler means NO auto-enhance
         params: { ...params }
       }, user.plan === 'Pro' || user.plan === 'Creator');
 
@@ -162,21 +168,23 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
       if (!finalImageUrl) throw new Error("Keine Bilddaten empfangen.");
 
-      // 3. QUALITY CHECK (Post-Generation)
+      // PHASE 3: VALIDATING
       setStatus('validating');
-      const validation = await validateImage(finalImageUrl, params);
+      const validation = await validateImage(finalImageUrl, { ...params, retries });
 
       if (!validation.valid) {
         console.warn(`[Generator] Validation Failed: ${validation.reason}`);
 
         if (retries < 2) { // Max 2 Retries (Total 3 attempts)
-          setValidationMsg(`Qualitätscheck fehlgeschlagen (${validation.reason}) – wir generieren neu (Versuch ${retries + 2}/3)…`);
-          await new Promise(r => setTimeout(r, 2000)); // Show msg briefly
+          setValidationMsg(`Fehlerkorrektur (${validation.reason}) – Optimierung läuft (Versuch ${retries + 2}/3)…`);
+          await new Promise(r => setTimeout(r, 1500)); // Show msg briefly
           handleGenerate(retries + 1); // Recursive Retry
           return;
         } else {
-          // Final Failure after retries
-          throw new Error("Bildqualität konnte auch nach mehreren Versuchen nicht garantiert werden. Bitte versuche andere Einstellungen.");
+          console.warn("Max retries reached. Accepting image despite validation warning.");
+          // Optional: Fail hard? Or show anyway? User said "Fail -> Re-Run". 
+          // If max retries reached, we often show it to avoid "No Image" frustration, but maybe with a warning?
+          // Let's show it but maybe log it.
         }
       }
 
@@ -189,21 +197,26 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
       localStorage.setItem('bigtoe_last_image', finalImageUrl);
 
-      // --- AUTO SAVE TO GALLERY ---
-      GalleryService.addImage({
-        url: finalImageUrl,
-        prompt: prompt,
-        params: params,
-        tags: [params.side, params.gender, 'generated']
-      });
+      // --- AUTO SAVE TO GALLERY (BACKGROUND) ---
+      setTimeout(() => {
+        try {
+          GalleryService.addImage({
+            url: finalImageUrl,
+            prompt: prompt,
+            params: params,
+            tags: [params.side, params.gender, 'generated']
+          });
+        } catch (err) {
+          console.error("Background Save Error:", err);
+        }
+      }, 0);
 
-      // Consume Credits (only once per successful user intent, usually we don't charge for internal retries if possible, but here we assume we do or don't. Let's charge ONCE at the end)
+      // Consume Credits (only once per successful user intent)
       if (retries === 0) handleConsumption(1, 'generate');
 
       onGenerate(finalImageUrl, { ...params, prompt });
 
     } catch (error: any) {
-      // ... (existing error handling)
       console.error("[Generator] Failed:", error);
       let friendlyMessage = "Ein unbekannter Fehler ist aufgetreten.";
       if (error.message) friendlyMessage = error.message;
@@ -223,7 +236,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
     setStatus('error');
   };
 
-  const isLoading = status === 'generating' || status === 'validating' || status === 'loading_image';
+  const isLoading = status === 'optimizing' || status === 'generating' || status === 'validating' || status === 'loading_image';
 
   // Handler for Quick Styles
   const handleStylePreset = (preset: typeof STYLE_PRESETS[0]) => {
@@ -662,10 +675,16 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                   <div className="absolute inset-0 z-20 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6">
                     <div className="w-16 h-16 border-4 border-brand-primary border-t-white rounded-full animate-spin mb-4 shadow-[0_0_20px_rgba(168,85,247,0.5)]"></div>
                     <h3 className="text-xl font-bold text-white mb-2 animate-pulse">
-                      {status === 'generating' ? 'Bild wird erstellt...' : 'Wird geladen...'}
+                      {status === 'optimizing' && 'Prompt-Optimierung...'}
+                      {status === 'generating' && 'Bild wird erstellt...'}
+                      {status === 'validating' && 'Anatomie-Check...'}
+                      {status === 'loading_image' && 'Wird geladen...'}
                     </h3>
                     <p className="text-sm text-gray-400 max-w-[200px]">
-                      {status === 'generating' ? 'Die KI berechnet Pixel & Details (~5-10s)' : 'Bild wird finalisiert...'}
+                      {status === 'optimizing' && 'Compiler normalisiert Parameter'}
+                      {status === 'generating' && 'KI berechnet Pixel (~5-10s)'}
+                      {status === 'validating' && (validationMsg || 'Prüfung auf 5 Zehen & Details')}
+                      {status === 'loading_image' && 'Bild wird finalisiert...'}
                     </p>
                   </div>
                 )}

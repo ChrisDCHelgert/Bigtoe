@@ -1,8 +1,8 @@
 // screens/Generator.tsx
-// Fetish/Creator UX - V3.2 Stabilized Layout (DE)
+// Fetish/Creator UX - V4.0 Stable & Reliable (DE)
 
-import React, { useState, useRef } from 'react';
-import { Settings, Sparkles, Sliders, Wand2, Info, Check, Eye, Footprints, Camera, Sun, Layers, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Settings, Sparkles, Sliders, Wand2, Info, Check, Eye, Footprints, Camera, Layers, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '../components/Button';
 import { ImageModal } from '../components/ImageModal';
 import { imageService } from '../services/image/ImageService';
@@ -26,10 +26,11 @@ interface GeneratorProps {
 }
 
 export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, onGenerate }) => {
-  const [isGenerating, setIsGenerating] = useState(false);
+  // --- STATE MANAGEMENT ---
+  const [status, setStatus] = useState<'idle' | 'generating' | 'loading_image' | 'success' | 'error'>('idle');
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Form State
   const [params, setParams] = useState({
@@ -37,8 +38,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
     gender: 'female' as 'female' | 'male' | 'diverse',
     side: 'both' as keyof typeof FOOT_SIDES,
     footSize: 38,
-    skinTone: SKIN_TONE_PRESETS[1], // Default Type II
-    angle: CAMERA_ANGLES[1], // Default Side
+    skinTone: SKIN_TONE_PRESETS[1],
+    angle: CAMERA_ANGLES[1],
     visualDetails: [] as string[],
     scene: SCENE_OPTIONS[0],
     lighting: ''
@@ -46,9 +47,18 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
   const previewRef = useRef<HTMLDivElement>(null);
 
+  // --- PERSISTENCE ---
+  useEffect(() => {
+    // Load last image from local storage on mount
+    const savedImage = localStorage.getItem('bigtoe_last_image');
+    if (savedImage) {
+      setResultImage(savedImage);
+      setStatus('success');
+    }
+  }, []);
+
   const handleStylePreset = (preset: typeof STYLE_PRESETS[0]) => {
     const matchingAngle = CAMERA_ANGLES.find(a => a.value === preset.params.angle) || CAMERA_ANGLES[1];
-
     setParams(prev => ({
       ...prev,
       scene: preset.params.scene,
@@ -71,25 +81,26 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
 
   const handleGenerate = async () => {
     if (user.credits < 1) {
-      alert("Nicht genügend Credits");
+      alert("Du hast nicht genügend Credits.");
       return;
     }
 
-    setIsGenerating(true);
-    setResultImage(null);
-    setGenerationError(null);
+    // 1. Start Generation
+    setStatus('generating');
+    setErrorMessage(null);
 
-    // Scroll to preview on mobile
+    // Scroll on Mobile
     if (previewRef.current && window.innerWidth < 1024) {
       previewRef.current.scrollIntoView({ behavior: 'smooth' });
     }
 
     try {
-      // Map "diverse" to a prompt description if needed, or rely on model understanding
       const genderPrompt = params.gender === 'diverse' ? 'non-binary person' : params.gender;
-
       const prompt = `Photorealistic ${genderPrompt} feet, ${FOOT_SIDES[params.side]}, ${params.angle.value}, ${params.skinTone.value}. Details: ${params.visualDetails.join(', ')}. Scene: ${params.scene}. Lighting: ${params.lighting || 'balanced'}. 8k resolution, highly detailed skin texture, realistic toes, masterpiece.`;
 
+      console.log("[Generator] Starting request...", { prompt });
+
+      // 2. Call API
       const result = await imageService.generateImage({
         prompt: prompt,
         aspectRatio: '16:9',
@@ -97,43 +108,58 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
         params: { ...params }
       }, user.plan === 'Pro' || user.plan === 'Creator');
 
-      // --- ROBUST IMAGE HANDLING ---
-      // 1. Check for standard URL
+      // 3. Robust URL Handling
       let finalImageUrl = result.url || (result as any).imageUrl;
-
-      // 2. Check for Base64 (sometimes returned in 'b64_json' or similar if provider differs)
       if ((result as any).b64_json) {
         finalImageUrl = `data:image/png;base64,${(result as any).b64_json}`;
       }
 
-      // 3. Validate and Format
-      if (!finalImageUrl) {
-        console.error("No image data found in response:", result);
-        throw new Error("Keine Bilddaten empfangen (Empty Response).");
-      }
+      if (!finalImageUrl) throw new Error("Keine Bilddaten empfangen.");
 
+      // Check for raw base64
       if (typeof finalImageUrl === 'string' && !finalImageUrl.startsWith('http') && !finalImageUrl.startsWith('data:')) {
-        // Assume raw base64 string if not url or data-uri
         finalImageUrl = `data:image/png;base64,${finalImageUrl}`;
       }
 
-      handleConsumption(1, 'generate');
+      console.log("[Generator] Image URL received", finalImageUrl.substring(0, 50) + "...");
+
+      // 4. Update State -> Wait for onLoad
       setResultImage(finalImageUrl);
+      setStatus('loading_image'); // UI stays in loading state until <img> loads
+
+      // Persist
+      localStorage.setItem('bigtoe_last_image', finalImageUrl);
+
+      // Consume Credits
+      handleConsumption(1, 'generate');
       onGenerate(finalImageUrl, { ...params, prompt });
 
     } catch (error: any) {
-      console.error("Generation failed:", error);
-      setGenerationError(error.message || "Unbekannter Fehler bei der Generierung.");
-    } finally {
-      setIsGenerating(false);
+      console.error("[Generator] Failed:", error);
+      setErrorMessage(error.message || "Unbekannter Fehler.");
+      setStatus('error');
     }
   };
+
+  // Called when main <img> finishes loading
+  const handleImageLoad = () => {
+    console.log("[Generator] Image loaded successfully.");
+    setStatus('success');
+  };
+
+  const handleImageError = () => {
+    console.error("[Generator] Image failed to load (404/Network).");
+    setErrorMessage("Das Bild konnte nicht geladen werden.");
+    setStatus('error');
+  };
+
+  const isLoading = status === 'generating' || status === 'loading_image';
 
   return (
     <div className="min-h-screen bg-brand-bg text-white pb-20 font-sans">
       <div className="max-w-[1800px] mx-auto px-4 md:px-6 py-6" id="generator-top">
 
-        {/* Header & Quick Fetish Styles */}
+        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-6 flex items-center gap-3 tracking-tight">
             <Wand2 className="text-brand-primary" size={28} />
@@ -145,7 +171,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
           </div>
         </div>
 
-        {/* MAIN LAYOUT: 8 Columns Controls | 4 Columns Preview */}
+        {/* MAIN GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
           {/* LEFT: CONTROLS (8 Cols) */}
@@ -166,8 +192,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                       key={q}
                       onClick={() => setParams({ ...params, quality: q as any })}
                       className={`flex-1 py-1.5 text-xs font-semibold rounded-lg capitalize transition-all ${params.quality === q
-                          ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/25'
-                          : 'text-gray-500 hover:text-gray-300'
+                        ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/25'
+                        : 'text-gray-500 hover:text-gray-300'
                         }`}
                     >
                       {q}
@@ -176,7 +202,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 </div>
               </div>
 
-              {/* Model (3-Segment) */}
+              {/* Model */}
               <div className="mb-6">
                 <label className="text-xs font-medium text-gray-400 mb-2 block">Modell</label>
                 <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
@@ -185,8 +211,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                       key={g}
                       onClick={() => setParams({ ...params, gender: g as any })}
                       className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${params.gender === g
-                          ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/30 shadow-inner'
-                          : 'text-gray-400 hover:text-white'
+                        ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/30 shadow-inner'
+                        : 'text-gray-400 hover:text-white'
                         }`}
                     >
                       {g === 'female' && 'Frau'}
@@ -197,7 +223,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 </div>
               </div>
 
-              {/* View/Ansicht */}
+              {/* Ansicht */}
               <div className="mb-6">
                 <label className="text-xs font-medium text-gray-400 mb-2 block">Ansicht</label>
                 <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
@@ -206,8 +232,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                       key={key}
                       onClick={() => setParams({ ...params, side: key as any })}
                       className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${params.side === key
-                          ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/30'
-                          : 'text-gray-400 hover:text-white'
+                        ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/30'
+                        : 'text-gray-400 hover:text-white'
                         }`}
                     >
                       {key === 'left' && 'Links'}
@@ -259,7 +285,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
               </div>
             </div>
 
-            {/* COLUMN B: Details (Shape + Texture + Style) */}
+            {/* COLUMN B: Details */}
             <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl h-full flex flex-col gap-6">
               <h3 className="text-xs font-bold uppercase text-gray-400 mb-1 flex items-center gap-2 tracking-wider">
                 <Sliders size={14} /> Details
@@ -276,8 +302,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                       key={opt}
                       onClick={() => toggleDetail(opt)}
                       className={`px-3 py-2 rounded-lg text-xs font-medium transition-all border ${params.visualDetails.includes(opt)
-                          ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_8px_rgba(168,85,247,0.2)]'
-                          : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300'
+                        ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_8px_rgba(168,85,247,0.2)]'
+                        : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300'
                         }`}
                     >
                       {opt}
@@ -297,8 +323,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                       key={opt}
                       onClick={() => toggleDetail(opt)}
                       className={`px-3 py-2 rounded-lg text-xs font-medium transition-all border ${params.visualDetails.includes(opt)
-                          ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_8px_rgba(168,85,247,0.2)]'
-                          : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300'
+                        ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_8px_rgba(168,85,247,0.2)]'
+                        : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300'
                         }`}
                     >
                       {opt}
@@ -318,8 +344,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                       key={opt}
                       onClick={() => toggleDetail(opt)}
                       className={`px-3 py-2 rounded-lg text-xs font-medium transition-all border ${params.visualDetails.includes(opt)
-                          ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_8px_rgba(168,85,247,0.2)]'
-                          : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300'
+                        ? 'bg-brand-primary/20 border-brand-primary text-white shadow-[0_0_8px_rgba(168,85,247,0.2)]'
+                        : 'bg-black/20 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300'
                         }`}
                     >
                       {opt}
@@ -329,13 +355,12 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
               </div>
             </div>
 
-            {/* COLUMN C: Scene (Camera + Env + Light) */}
+            {/* COLUMN C: Scene */}
             <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl h-full">
               <h3 className="text-xs font-bold uppercase text-gray-400 mb-5 flex items-center gap-2 tracking-wider">
                 <Camera size={14} /> Szene & Kamera
               </h3>
 
-              {/* Camera Angle (Grid) */}
               <div className="mb-6">
                 <label className="text-xs font-medium text-gray-400 mb-2 block">Kamerawinkel</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -344,8 +369,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                       key={a.id}
                       onClick={() => setParams({ ...params, angle: a })}
                       className={`p-2 rounded-lg text-xs border text-left transition-all ${params.angle.id === a.id
-                          ? 'bg-brand-primary/10 border-brand-primary text-white'
-                          : 'bg-black/20 border-white/5 text-gray-400 hover:bg-white/5'
+                        ? 'bg-brand-primary/10 border-brand-primary text-white'
+                        : 'bg-black/20 border-white/5 text-gray-400 hover:bg-white/5'
                         }`}
                     >
                       {a.label}
@@ -354,7 +379,6 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 </div>
               </div>
 
-              {/* Environment */}
               <div className="mb-6">
                 <label className="text-xs font-medium text-gray-400 mb-2 block">Umgebung</label>
                 <Select
@@ -365,7 +389,6 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                 />
               </div>
 
-              {/* Lighting */}
               <div>
                 <label className="text-xs font-medium text-gray-400 mb-2 block">Beleuchtung</label>
                 <div className="flex flex-wrap gap-1.5 mb-2">
@@ -395,85 +418,101 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
           <div className="lg:col-span-4 sticky top-6">
             <div
               ref={previewRef}
-              className="bg-brand-card rounded-2xl border border-white/5 shadow-2xl overflow-hidden group"
+              className="bg-brand-card rounded-2xl border border-white/5 shadow-2xl overflow-hidden group min-h-[400px] flex flex-col"
             >
               <div className="p-1 bg-gradient-to-r from-brand-primary via-purple-500 to-pink-500 opacity-20 h-1"></div>
 
-              {/* Result Display */}
-              <div className="aspect-[16/9] bg-black/40 relative flex items-center justify-center min-h-[300px]">
-                {isGenerating ? (
-                  <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-sm text-brand-primary font-bold animate-pulse">Generiere...</p>
-                    <p className="text-[10px] text-gray-500 mt-2">Das dauert ca. 5-10 Sekunden</p>
-                  </div>
-                ) : resultImage ? (
-                  <>
-                    <img
-                      src={resultImage}
-                      alt="Generated Result"
-                      onClick={() => setIsModalOpen(true)}
-                      className="w-full h-full object-cover cursor-zoom-in hover:opacity-95 transition-opacity"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-6">
-                      <Button
-                        onClick={() => setIsModalOpen(true)}
-                        size="sm" variant="secondary"
-                        className="backdrop-blur-md bg-white/10 border-white/20"
-                      >
-                        <Eye size={14} className="mr-2" /> Vergrößern
-                      </Button>
-                    </div>
-                  </>
-                ) : generationError ? (
-                  <div className="text-center p-6 text-red-400 max-w-[80%]">
-                    <AlertCircle size={32} className="mx-auto mb-3 opacity-80" />
-                    <p className="text-sm font-bold mb-1">Fehler bei der Erstellung</p>
-                    <p className="text-xs opacity-80">{generationError}</p>
-                    <Button
-                      onClick={handleGenerate}
-                      variant="secondary"
-                      size="sm"
-                      className="mt-4 bg-red-500/10 border-red-500/30 text-red-200 hover:bg-red-500/20"
-                    >
-                      Erneut versuchen
-                    </Button>
-                  </div>
-                ) : (
+              {/* IMAGE DISPLAY AREA */}
+              <div className="relative flex-1 bg-black/50 aspect-[3/4] md:aspect-auto flex items-center justify-center overflow-hidden">
+
+                {/* 1. IDLE STATE */}
+                {status === 'idle' && !resultImage && (
                   <div className="text-center p-8 opacity-40">
                     <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-primary/50">
                       <Sparkles size={32} />
                     </div>
                     <h3 className="text-white font-medium mb-1">Bereit</h3>
-                    <p className="text-gray-500 text-xs">
-                      Klicke unten auf "Bild generieren"
+                    <p className="text-gray-500 text-xs">Wähle Einstellungen & klicke Start</p>
+                  </div>
+                )}
+
+                {/* 2. LOADING STATE (Overlay) */}
+                {isLoading && (
+                  <div className="absolute inset-0 z-20 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6">
+                    <div className="w-16 h-16 border-4 border-brand-primary border-t-white rounded-full animate-spin mb-4 shadow-[0_0_20px_rgba(168,85,247,0.5)]"></div>
+                    <h3 className="text-xl font-bold text-white mb-2 animate-pulse">
+                      {status === 'generating' ? 'Bild wird erstellt...' : 'Wird geladen...'}
+                    </h3>
+                    <p className="text-sm text-gray-400 max-w-[200px]">
+                      {status === 'generating' ? 'Die KI berechnet Pixel & Details (~5-10s)' : 'Bild wird finalisiert...'}
                     </p>
+                  </div>
+                )}
+
+                {/* 3. IMAGE RESULT */}
+                {resultImage && (
+                  <>
+                    <img
+                      src={resultImage}
+                      alt="Generated"
+                      onLoad={handleImageLoad}
+                      onError={handleImageError}
+                      onClick={() => setIsModalOpen(true)}
+                      className={`w-full h-full object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'} cursor-zoom-in`}
+                    />
+
+                    {/* Hover Overlay */}
+                    {!isLoading && (
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-8 p-4 z-10 pointer-events-none">
+                        <Button
+                          onClick={() => setIsModalOpen(true)}
+                          size="sm" variant="secondary"
+                          className="backdrop-blur-md bg-white/10 border-white/20 pointer-events-auto"
+                        >
+                          <Eye size={14} className="mr-2" /> Vollbild / Zoom
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* 4. ERROR STATE */}
+                {status === 'error' && (
+                  <div className="absolute inset-0 z-10 bg-black/90 flex flex-col items-center justify-center text-center p-6 text-red-400">
+                    <AlertCircle size={48} className="mb-4 opacity-80" />
+                    <h3 className="text-lg font-bold text-white mb-2">Fehler aufgetreten</h3>
+                    <p className="text-sm opacity-80 mb-6">{errorMessage}</p>
+                    <Button onClick={handleGenerate} variant="secondary" className="bg-red-500/10 border-red-500/30 text-white hover:bg-red-500/20">
+                      <RefreshCw size={16} className="mr-2" /> Erneut versuchen
+                    </Button>
                   </div>
                 )}
               </div>
 
-              {/* Main Action */}
-              <div className="p-5 border-t border-white/5 bg-brand-card">
+              {/* ACTION BUTTON */}
+              <div className="p-5 border-t border-white/5 bg-brand-card z-30 relative">
                 <Button
                   fullWidth
                   size="lg"
                   variant="primary"
                   onClick={handleGenerate}
-                  disabled={isGenerating}
-                  className="shadow-xl shadow-purple-900/40 relative overflow-hidden py-4 text-base tracking-wide"
+                  disabled={isLoading}
+                  className={`
+                    shadow-xl shadow-purple-900/20 py-4 text-base tracking-wide transition-all
+                    ${isLoading ? 'opacity-70 cursor-wait' : 'hover:scale-[1.02]'}
+                  `}
                 >
-                  {isGenerating ? 'Wird erstellt...' : `Bild generieren`}
-                  {!isGenerating && <Wand2 size={18} className="ml-2" />}
+                  {isLoading ? 'Bitte warten...' : 'Bild generieren'}
+                  {!isLoading && <Wand2 size={18} className="ml-2" />}
                 </Button>
-                <p className="text-[10px] text-center text-gray-600 mt-3 font-mono">1 Credit pro Bild</p>
+                <div className="flex justify-between items-center mt-3 px-1">
+                  <span className="text-[10px] text-gray-500 font-mono">1 Credit / Bild</span>
+                  <span className="text-[10px] text-gray-600 flex items-center gap-1">
+                    <Info size={10} /> AI Generated • Fictional
+                  </span>
+                </div>
               </div>
-            </div>
 
-            {/* Footer Links in Preview Column */}
-            <div className="mt-8 text-center opacity-40">
-              <p className="text-[10px] text-gray-500 flex items-center justify-center gap-2">
-                <Info size={10} /> AI Generated Content. No real persons.
-              </p>
             </div>
           </div>
 

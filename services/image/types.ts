@@ -7,6 +7,7 @@ export interface GenerationRequest {
     negativePrompt?: string;
     width?: number;
     height?: number;
+    aspectRatio?: string; // e.g. "16:9"
     params: GeneratorParams; // Pass through for logging/metadata
     identityToken?: string;
 }

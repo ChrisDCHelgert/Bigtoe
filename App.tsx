@@ -43,7 +43,9 @@ const App: React.FC = () => {
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
 
   const handleConsumption = (amount: number, type: 'generate' | 'upscale') => {
-    if (user.isPremium) return;
+    // Premium users also consume credits (they just have a larger allowance of 1500 etc)
+    // if (user.isPremium) return; <--- REMOVED BUG
+
 
     if (type === 'generate') {
       if (user.freeTrialUsed < user.freeTrialTotal) {

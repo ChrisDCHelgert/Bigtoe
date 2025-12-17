@@ -211,8 +211,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
         }
       }, 0);
 
-      // Consume Credits (only once per successful user intent)
-      if (retries === 0) handleConsumption(1, 'generate');
+      // Consume Credits (Charge for the successful result, regardless of how many retries it took internally)
+      handleConsumption(1, 'generate');
 
       onGenerate(finalImageUrl, { ...params, prompt });
 

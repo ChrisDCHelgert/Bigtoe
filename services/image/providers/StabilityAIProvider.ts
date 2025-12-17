@@ -43,17 +43,10 @@ export class StabilityAIProvider implements ImageProvider {
             text_prompts: prompts,
             cfg_scale: 7,
             height: 1024,
-            width: 1792, // 16:9ish aspect ratio (1024 * 1024 = 1M pixels, 1024x1024 is standard, let's try 16:9 supported res)
-            // Stability SDXL supports specifc resolutions. 1024x1024 is safest default.
-            // Let's stick to 1024x1024 or 16:9 approximate.
-            // 1536x640, 1344x768, 1216x832, 1152x896, 1024x1024
-            // User asked for "16:9" in Generator.tsx often.
-            // Let's us 1344x768 (7:4 ~ 16:9) or 1216x832. 
-            // But for now, let's stick to the generated aspect ratio logic or default to 1024x1024 if not specified.
-            // Actually Generator.tsx sends '16:9'. 
-            // Let's map '16:9' to 1344x768.
+            width: 1344, // Default to landscape approximation
             samples: 1,
-            steps: 30,
+            steps: 40, // Increase steps for better quality
+            style_preset: 'photographic', // CRITICAL: Enforce Photorealism
         };
 
         // Manual Aspect Ratio mapping for SDXL allowed dimensions

@@ -8,10 +8,13 @@ interface ImageModalProps {
     imageUrl: string;
     onClose: () => void;
     title?: string;
+    isOpen: boolean;
 }
 
-export const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose, title }) => {
+export const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose, title, isOpen }) => {
     const [zoom, setZoom] = React.useState(1);
+
+    if (!isOpen) return null;
 
     // ESC key to close
     useEffect(() => {

@@ -1,70 +1,61 @@
 // screens/Plans.tsx
-// Pricing & Plans page with Stripe Checkout integration
+// Clean pricing grid with payment modal
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Check, Crown, Sparkles } from 'lucide-react';
+import { Zap, Check, Crown, Sparkles, Shield } from 'lucide-react';
 import { Button } from '../components/Button';
+import { PaymentModal } from '../components/PaymentModal';
 import { UserProfile } from '../types';
 
 interface PlansProps {
     user: UserProfile;
 }
 
-// Stripe Price IDs (Replace with your actual Stripe price IDs)
-const PRICE_IDS = {
-    starter: 'price_starter_50_credits',
-    pro: 'price_pro_200_credits',
-    premium: 'price_premium_monthly'
-};
-
 const PLANS = [
     {
-        id: 'starter',
-        name: 'Starter Pack',
-        price: '$4.99',
+        id: 'basic',
+        name: 'Basic',
+        price: '€9.99',
         credits: 50,
         features: [
-            '50 Generation Credits',
-            'Standard Quality (1024x1024)',
-            'Gallery Storage',
-            'No Expiration'
+            '50 Generierungen / Monat',
+            'Standard Qualität (1024x1024)',
+            'Galerie-Speicherung',
+            'Email Support'
         ],
-        priceId: PRICE_IDS.starter,
-        mode: 'payment' as const,
         icon: Zap,
         color: 'from-blue-500 to-cyan-500'
     },
     {
         id: 'pro',
-        name: 'Pro Pack',
-        price: '$14.99',
+        name: 'Pro',
+        price: '€19.99',
         credits: 200,
         features: [
-            '200 Generation Credits',
+            '200 Generierungen / Monat',
             'High Quality (1280x720)',
-            'Priority Processing',
-            'Extended Gallery'
+            'Priorität-Verarbeitung',
+            'Erweiterte Galerie',
+            'Alle medizinischen Features'
         ],
-        priceId: PRICE_IDS.pro,
-        mode: 'payment' as const,
         icon: Sparkles,
         color: 'from-purple-500 to-pink-500',
-        popular: true
+        recommended: true
     },
     {
         id: 'premium',
         name: 'Premium',
-        price: '$29.99/mo',
+        price: '€39.99',
         credits: 'Unlimited',
         features: [
-            'Unlimited Generations',
+            'Unbegrenzte Generierungen',
             'Ultra Quality (2048x1536)',
             'Vertex AI Provider',
-            'Cancel Anytime'
+            'API-Zugang',
+            'Priorität-Support',
+            'Jederzeit kündbar'
         ],
-        priceId: PRICE_IDS.premium,
-        mode: 'subscription' as const,
         icon: Crown,
         color: 'from-yellow-500 to-orange-500'
     }
@@ -72,49 +63,37 @@ const PLANS = [
 
 export const Plans: React.FC<PlansProps> = ({ user }) => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState<string | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState<typeof PLANS[0] | null>(null);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-    const handleCheckout = async (priceId: string, mode: 'payment' | 'subscription', planId: string) => {
-        setLoading(planId);
+    const handleSelectPlan = (plan: typeof PLANS[0]) => {
+        setSelectedPlan(plan);
+        setShowPaymentModal(true);
+    };
 
-        try {
-            // Call Cloud Function to create Checkout Session
-            const response = await fetch('/api/billing/create-checkout-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    priceId,
-                    userId: 'user_id_placeholder', // Replace with actual user.id from auth
-                    mode
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.sessionUrl) {
-                // Redirect to Stripe Checkout
-                window.location.href = data.sessionUrl;
-            } else {
-                alert('Failed to create checkout session');
-                setLoading(null);
-            }
-        } catch (error) {
-            console.error('Checkout error:', error);
-            alert('Something went wrong. Please try again.');
-            setLoading(null);
-        }
+    const handleConfirmPayment = async (paymentMethod: string) => {
+        console.log('Payment confirmed:', selectedPlan?.id, paymentMethod);
+        // TODO: Integrate Stripe checkout
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        alert(`Plan ${selectedPlan?.name} abgeschlossen! (Demo)`);
+        setShowPaymentModal(false);
+        navigate('/home');
     };
 
     return (
-        <div className="min-h-screen bg-brand-bg p-6 pt-16 pb-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
             {/* Header */}
-            <div className="max-w-6xl mx-auto text-center mb-12">
-                <h1 className="text-4xl font-bold mb-4">Choose Your Plan</h1>
-                <p className="text-gray-400 text-lg">Select the perfect plan for your creative needs</p>
+            <div className="text-center mb-12">
+                <h1 className="text-4xl md:text-5xl font-bold mb-4">Wählen Sie Ihren Plan</h1>
+                <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+                    Professionelle AI-Bildgenerierung für Podologie und Fußgesundheit.
+                    Wählen Sie den Plan, der zu Ihren Bedürfnissen passt.
+                </p>
             </div>
 
-            {/* Pricing Cards */}
-            <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
+            {/* Pricing Grid - 3 Columns */}
+            <div className="grid md:grid-cols-3 gap-6 mb-12">
                 {PLANS.map((plan) => {
                     const Icon = plan.icon;
                     const isCurrentPlan = user.plan === plan.name;
@@ -122,15 +101,16 @@ export const Plans: React.FC<PlansProps> = ({ user }) => {
                     return (
                         <div
                             key={plan.id}
-                            className={`relative rounded-2xl border-2 transition-all ${plan.popular
+                            className={`relative rounded-2xl border-2 transition-all ${plan.recommended
                                     ? 'border-brand-primary scale-105 shadow-2xl shadow-brand-primary/20'
-                                    : 'border-white/10 hover:border-white/30'
+                                    : 'border-white/10 hover:border-white/20'
                                 } bg-brand-card p-6`}
                         >
-                            {plan.popular && (
+                            {/* Recommended Badge */}
+                            {plan.recommended && (
                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                                    <span className="bg-brand-primary text-white px-4 py-1 rounded-full text-xs font-bold">
-                                        MOST POPULAR
+                                    <span className="bg-brand-primary text-white px-4 py-1 rounded-full text-xs font-bold uppercase">
+                                        ⭐ Empfohlen
                                     </span>
                                 </div>
                             )}
@@ -146,11 +126,11 @@ export const Plans: React.FC<PlansProps> = ({ user }) => {
                             {/* Price */}
                             <div className="mb-6">
                                 <span className="text-4xl font-bold">{plan.price}</span>
-                                {plan.mode === 'subscription' && <span className="text-gray-400 text-sm ml-2">per month</span>}
+                                <span className="text-gray-400 text-sm ml-2">/Monat</span>
                             </div>
 
                             {/* Credits */}
-                            <div className="mb-6">
+                            <div className="mb-6 p-3 bg-brand-primary/10 rounded-lg border border-brand-primary/20">
                                 <div className="flex items-center gap-2 text-brand-primary font-bold">
                                     <Zap size={20} fill="currentColor" />
                                     <span>{typeof plan.credits === 'number' ? `${plan.credits} Credits` : plan.credits}</span>
@@ -170,16 +150,16 @@ export const Plans: React.FC<PlansProps> = ({ user }) => {
                             {/* CTA Button */}
                             {isCurrentPlan ? (
                                 <Button variant="secondary" fullWidth disabled>
-                                    Current Plan
+                                    Aktueller Plan
                                 </Button>
                             ) : (
                                 <Button
-                                    variant={plan.popular ? 'primary' : 'secondary'}
+                                    variant={plan.recommended ? 'primary' : 'secondary'}
                                     fullWidth
-                                    onClick={() => handleCheckout(plan.priceId, plan.mode, plan.id)}
-                                    isLoading={loading === plan.id}
+                                    onClick={() => handleSelectPlan(plan)}
+                                    className={plan.recommended ? 'shadow-xl shadow-purple-900/40' : ''}
                                 >
-                                    {plan.mode === 'subscription' ? 'Subscribe Now' : 'Buy Now'}
+                                    Plan auswählen
                                 </Button>
                             )}
                         </div>
@@ -187,13 +167,37 @@ export const Plans: React.FC<PlansProps> = ({ user }) => {
                 })}
             </div>
 
-            {/* FAQ / Info */}
-            <div className="max-w-4xl mx-auto mt-16 text-center">
-                <p className="text-gray-400 text-sm">
-                    All prices in USD. Credits never expire. Secure payment via Stripe.
-                    <button className="underline ml-1" onClick={() => navigate('/support')}>Need help?</button>
+            {/* Trust Signals */}
+            <div className="text-center space-y-4">
+                <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
+                    <div className="flex items-center gap-2">
+                        <Shield size={16} className="text-green-500" />
+                        <span>DSGVO-konform</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Shield size={16} className="text-green-500" />
+                        <span>Sichere Zahlung via Stripe</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Shield size={16} className="text-green-500" />
+                        <span>Jederzeit kündbar</span>
+                    </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                    Alle Preise inkl. MwSt. Credits verfallen nicht.
+                    <button className="underline ml-1" onClick={() => navigate('/support')}>Hilfe benötigt?</button>
                 </p>
             </div>
+
+            {/* Payment Modal */}
+            {selectedPlan && (
+                <PaymentModal
+                    isOpen={showPaymentModal}
+                    onClose={() => setShowPaymentModal(false)}
+                    selectedPlan={selectedPlan}
+                    onConfirm={handleConfirmPayment}
+                />
+            )}
         </div>
     );
 };

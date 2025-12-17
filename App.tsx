@@ -11,7 +11,10 @@ import { Credits } from './screens/Credits';
 import { Impressum } from './screens/legal/Impressum';
 import { Datenschutz } from './screens/legal/Datenschutz';
 import { AGB } from './screens/legal/AGB';
+
 import { CookieSettings } from './screens/legal/CookieSettings';
+import { Contact } from './screens/Contact';
+import { CookieProvider } from './contexts/CookieContext';
 import { UserProfile } from './types';
 
 const App: React.FC = () => {
@@ -107,65 +110,68 @@ const App: React.FC = () => {
   };
 
   return (
-    <Router>
-      <Layout user={user}>
-        <Routes>
-          <Route path="/" element={<Onboarding />} />
-          <Route path="/home" element={<Home user={user} />} />
-          <Route
-            path="/generator"
-            element={
-              <Generator
-                user={user}
-                handleConsumption={handleConsumption}
-                onGenerate={handleGenerate}
-              />
-            }
-          />
-          <Route
-            path="/result"
-            element={
-              <Result
-                result={lastGeneratedImage}
-                onSave={handleSaveToGallery}
-                handleConsumption={handleConsumption}
-                user={user}
-              />
-            }
-          />
-          <Route
-            path="/gallery"
-            element={
-              <Gallery
-                images={galleryImages}
-                onToggleFavorite={handleToggleFavorite}
-                onDelete={handleDeleteImage}
-              />
-            }
-          />
-          <Route path="/premium" element={<Checkout onUpgrade={handleUpgrade} />} />
-          <Route path="/checkout" element={<Checkout onUpgrade={handleUpgrade} />} />
-          <Route
-            path="/profile"
-            element={
-              <Credits
-                user={user}
-                onUpdateSettings={handleUpdateSettings}
-                onDeleteAccount={handleDeleteAccount}
-              />
-            }
-          />
+    <CookieProvider>
+      <Router>
+        <Layout user={user}>
+          <Routes>
+            <Route path="/" element={<Onboarding />} />
+            <Route path="/home" element={<Home user={user} />} />
+            <Route
+              path="/generator"
+              element={
+                <Generator
+                  user={user}
+                  handleConsumption={handleConsumption}
+                  onGenerate={handleGenerate}
+                />
+              }
+            />
+            <Route
+              path="/result"
+              element={
+                <Result
+                  result={lastGeneratedImage}
+                  onSave={handleSaveToGallery}
+                  handleConsumption={handleConsumption}
+                  user={user}
+                />
+              }
+            />
+            <Route
+              path="/gallery"
+              element={
+                <Gallery
+                  images={galleryImages}
+                  onToggleFavorite={handleToggleFavorite}
+                  onDelete={handleDeleteImage}
+                />
+              }
+            />
+            <Route path="/premium" element={<Checkout onUpgrade={handleUpgrade} />} />
+            <Route path="/checkout" element={<Checkout onUpgrade={handleUpgrade} />} />
+            <Route
+              path="/profile"
+              element={
+                <Credits
+                  user={user}
+                  onUpdateSettings={handleUpdateSettings}
+                  onDeleteAccount={handleDeleteAccount}
+                />
+              }
+            />
 
-          {/* Legal Pages - Accessible without authentication */}
-          <Route path="/impressum" element={<Impressum />} />
-          <Route path="/datenschutz" element={<Datenschutz />} />
-          <Route path="/agb" element={<AGB />} />
-          <Route path="/cookie-settings" element={<CookieSettings />} />
+            {/* Legal Pages - Accessible without authentication */}
+            <Route path="/impressum" element={<Impressum />} />
+            <Route path="/datenschutz" element={<Datenschutz />} />
+            <Route path="/agb" element={<AGB />} />
+            <Route path="/cookie-settings" element={<CookieSettings />} />
+            <Route path="/contact" element={<Contact />} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
-    </Router>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Layout>
+      </Router>
+    </CookieProvider>
   );
 };
 

@@ -57,7 +57,7 @@ export class ImageService {
     /**
      * Main Entry Point with Fallback Support
      */
-    async generate(request: GenerationRequest, userIsPremium: boolean): Promise<GenerationResult> {
+    async generateImage(request: GenerationRequest, userIsPremium: boolean): Promise<GenerationResult> {
         const startTime = Date.now();
         const provider = this.getProvider(userIsPremium);
 

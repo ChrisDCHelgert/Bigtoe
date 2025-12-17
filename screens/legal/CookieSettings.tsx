@@ -1,18 +1,17 @@
 // screens/legal/CookieSettings.tsx
 // Cookie Settings and Policy page
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Cookie, Check, X } from 'lucide-react';
 import { Button } from '../../components/Button';
+import { useCookie } from '../../contexts/CookieContext';
 
 export const CookieSettings: React.FC = () => {
-    const [analytics, setAnalytics] = useState(true);
-    const [marketing, setMarketing] = useState(false);
+    const { settings, updateSettings, saveSettings } = useCookie();
     const [saved, setSaved] = useState(false);
 
     const handleSave = () => {
-        // TODO: Implement actual cookie consent saving
-        console.log('Cookie settings saved:', { analytics, marketing });
+        saveSettings();
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
     };
@@ -63,7 +62,7 @@ export const CookieSettings: React.FC = () => {
                     </div>
 
                     {/* Analytics Cookies */}
-                    <div className={`bg-brand-card rounded-xl p-6 border ${analytics ? 'border-brand-primary/50' : 'border-white/10'} mb-4`}>
+                    <div className={`bg-brand-card rounded-xl p-6 border ${settings.analytics ? 'border-brand-primary/50' : 'border-white/10'} mb-4`}>
                         <div className="flex items-start justify-between mb-3">
                             <div className="flex-1">
                                 <h3 className="text-xl font-semibold mb-2">Analyse & Statistik</h3>
@@ -73,12 +72,12 @@ export const CookieSettings: React.FC = () => {
                                 </p>
                             </div>
                             <button
-                                onClick={() => setAnalytics(!analytics)}
-                                className={`ml-4 relative w-12 h-6 rounded-full transition-colors ${analytics ? 'bg-brand-primary' : 'bg-gray-600'
+                                onClick={() => updateSettings({ analytics: !settings.analytics })}
+                                className={`ml-4 relative w-12 h-6 rounded-full transition-colors ${settings.analytics ? 'bg-brand-primary' : 'bg-gray-600'
                                     }`}
                             >
                                 <span
-                                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${analytics ? 'translate-x-6' : ''
+                                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${settings.analytics ? 'translate-x-6' : ''
                                         }`}
                                 />
                             </button>
@@ -94,7 +93,7 @@ export const CookieSettings: React.FC = () => {
                     </div>
 
                     {/* Marketing Cookies */}
-                    <div className={`bg-brand-card rounded-xl p-6 border ${marketing ? 'border-brand-primary/50' : 'border-white/10'} mb-4`}>
+                    <div className={`bg-brand-card rounded-xl p-6 border ${settings.marketing ? 'border-brand-primary/50' : 'border-white/10'} mb-4`}>
                         <div className="flex items-start justify-between mb-3">
                             <div className="flex-1">
                                 <h3 className="text-xl font-semibold mb-2">Marketing & Personalisierung</h3>
@@ -104,12 +103,12 @@ export const CookieSettings: React.FC = () => {
                                 </p>
                             </div>
                             <button
-                                onClick={() => setMarketing(!marketing)}
-                                className={`ml-4 relative w-12 h-6 rounded-full transition-colors ${marketing ? 'bg-brand-primary' : 'bg-gray-600'
+                                onClick={() => updateSettings({ marketing: !settings.marketing })}
+                                className={`ml-4 relative w-12 h-6 rounded-full transition-colors ${settings.marketing ? 'bg-brand-primary' : 'bg-gray-600'
                                     }`}
                             >
                                 <span
-                                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${marketing ? 'translate-x-6' : ''
+                                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${settings.marketing ? 'translate-x-6' : ''
                                         }`}
                                 />
                             </button>

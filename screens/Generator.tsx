@@ -21,14 +21,12 @@ interface GeneratorProps {
 
 // Medical-grade skin tone presets
 const SKIN_TONE_PRESETS = [
-  { name: 'Very Light (Fitzpatrick I)', value: '#fde9dc', hex: '#fde9dc' },
-  { name: 'Light (Fitzpatrick II)', value: '#f8d9c3', hex: '#f8d9c3' },
-  { name: 'Light Medium (Fitzpatrick III)', value: '#e8bc9e', hex: '#e8bc9e' },
-  { name: 'Medium (Fitzpatrick IV)', value: '#d4a574', hex: '#d4a574' },
-  { name: 'Medium Dark (Fitzpatrick V)', value: '#ae7e56', hex: '#ae7e56' },
-  { name: 'Dark (Fitzpatrick VI)', value: '#754c29', hex: '#754c29' },
-  { name: 'Very Dark', value: '#4a2f1c', hex: '#4a2f1c' },
-  { name: 'Neutral Beige', value: '#c9ae91', hex: '#c9ae91' },
+  { name: 'Type I', value: '#fde9dc', hex: '#fde9dc' },
+  { name: 'Type II', value: '#f8d9c3', hex: '#f8d9c3' },
+  { name: 'Type III', value: '#e8bc9e', hex: '#e8bc9e' },
+  { name: 'Type IV', value: '#d4a574', hex: '#d4a574' },
+  { name: 'Type V', value: '#ae7e56', hex: '#ae7e56' },
+  { name: 'Type VI', value: '#754c29', hex: '#754c29' },
 ];
 
 export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, onGenerate }) => {
@@ -50,7 +48,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
     cameraAngle: 'top',
     side: 'both',
     scene: 'Indoor',
-    skinTone: '#f8d9c3', // Default to Light (Fitzpatrick II)
+    skinTone: '#f8d9c3', // Default to Type II
     customPrompt: '',
     medicalConditions: [],
     isRandomMode: false
@@ -82,7 +80,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
         quality: selectedPreset,
         userEmail: user.email || 'anonymous@bigtoe.ai',
         isPremium: user.isPremium,
-      });
+      }, user.isPremium);
 
       setGeneratedImage(result);
       handleConsumption(cost, 'generate');
@@ -132,8 +130,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                       key={g}
                       onClick={() => setParams({ ...params, gender: g.toLowerCase() as any })}
                       className={`py-2.5 text-sm rounded-lg border transition-colors font-medium ${params.gender === g.toLowerCase()
-                          ? 'bg-brand-primary border-brand-primary text-white'
-                          : 'bg-brand-bg border-white/10 text-gray-300 hover:border-white/30'
+                        ? 'bg-brand-primary border-brand-primary text-white'
+                        : 'bg-brand-bg border-white/10 text-gray-300 hover:border-white/30'
                         }`}
                     >
                       {g}
@@ -173,8 +171,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                       key={tone.value}
                       onClick={() => setParams({ ...params, skinTone: tone.value })}
                       className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${params.skinTone === tone.value
-                          ? 'border-brand-primary bg-brand-primary/10'
-                          : 'border-white/10 hover:border-white/30 bg-brand-bg'
+                        ? 'border-brand-primary bg-brand-primary/10'
+                        : 'border-white/10 hover:border-white/30 bg-brand-bg'
                         }`}
                     >
                       <div
@@ -273,8 +271,8 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                       setParams({ ...params, medicalConditions: newConds });
                     }}
                     className={`px-3 py-2 text-xs rounded-lg border transition-colors ${params.medicalConditions?.includes(cond)
-                        ? 'border-orange-400 bg-orange-400/10 text-orange-300 font-semibold'
-                        : 'border-white/10 bg-brand-bg text-gray-300 hover:border-white/30'
+                      ? 'border-orange-400 bg-orange-400/10 text-orange-300 font-semibold'
+                      : 'border-white/10 bg-brand-bg text-gray-300 hover:border-white/30'
                       }`}
                   >
                     {cond.split('(')[0].trim()}

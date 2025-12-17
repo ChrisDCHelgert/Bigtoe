@@ -44,12 +44,12 @@ export const Footer: React.FC = () => {
                                 </Link>
                             </li>
                             <li>
-                                <button
-                                    onClick={() => alert('Cookie-Einstellungen öffnen (TODO: Integration)')}
+                                <Link
+                                    to="/cookie-settings"
                                     className="text-gray-400 hover:text-white transition-colors"
                                 >
                                     Cookie-Einstellungen
-                                </button>
+                                </Link>
                             </li>
                         </ul>
                     </div>

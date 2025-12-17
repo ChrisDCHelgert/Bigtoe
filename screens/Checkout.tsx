@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Shield, Lock, CreditCard, Bitcoin, Wallet } from 'lucide-react';
+import { CheckCircle2, Shield, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/Button';
 import { PLANS } from '../constants';
+import { PaymentModal } from '../components/PaymentModal';
 
 interface CheckoutProps {
   onUpgrade?: (planId: string) => void;
@@ -10,131 +11,129 @@ interface CheckoutProps {
 
 export const Checkout: React.FC<CheckoutProps> = ({ onUpgrade }) => {
   const navigate = useNavigate();
-  const [method, setMethod] = useState('card');
-  const [selectedPlanId, setSelectedPlanId] = useState('pro');
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
-  const selectedPlan = PLANS.find(p => p.id === selectedPlanId) || PLANS[1];
+  // Default to nothing selected, or pre-select 'pro' if desired. 
+  // Requirement says: "Allow users to select exactly one plan... Disable CTA until selected"
+  // So let's start with nothing selected or null.
 
-  const handleSubscribe = () => {
-    // Simulate API call
-    setTimeout(() => {
-      if (onUpgrade) onUpgrade(selectedPlanId);
-      navigate('/home');
-    }, 1000);
+  const handlePlanSelect = (id: string) => {
+    setSelectedPlanId(id);
   };
 
+  const handleCheckoutStart = () => {
+    if (selectedPlanId) {
+      setShowModal(true);
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    setShowModal(false);
+    if (selectedPlanId && onUpgrade) {
+      onUpgrade(selectedPlanId);
+    }
+    navigate('/home');
+  };
+
+  const selectedPlan = PLANS.find(p => p.id === selectedPlanId);
+
   return (
-    <div className="p-6 pt-8 space-y-6">
-      <header className="flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="text-gray-400 hover:text-white">
-          Back
-        </button>
-        <h1 className="text-2xl font-bold">Checkout</h1>
-      </header>
-
-      {/* Plan Selection */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-        {PLANS.map(plan => (
-          <div
-            key={plan.id}
-            onClick={() => setSelectedPlanId(plan.id)}
-            className={`min-w-[120px] p-3 rounded-xl border cursor-pointer transition-all ${selectedPlanId === plan.id
-              ? 'bg-brand-primary border-brand-primary text-white shadow-lg shadow-purple-900/40'
-              : 'bg-brand-card border-white/10 text-gray-400 opacity-60'
-              }`}
-          >
-            <h3 className="font-bold text-sm">{plan.name}</h3>
-            <p className="text-xs">{plan.price}</p>
-            {plan.recommended && <div className="mt-1 text-[10px] bg-white/20 px-1 rounded inline-block">POPULAR</div>}
-          </div>
-        ))}
-      </div>
-
-      {/* Summary */}
-      <div className="bg-brand-card rounded-xl p-6 border border-brand-primary/30 relative overflow-hidden transition-all duration-300">
-        <div className="absolute top-0 right-0 bg-brand-primary px-3 py-1 rounded-bl-xl text-xs font-bold text-white">
-          SELECTED
-        </div>
-        <h2 className="text-xl font-bold mb-1">{selectedPlan.name} Membership</h2>
-        <p className="text-3xl font-bold text-white mb-4">{selectedPlan.price} <span className="text-sm font-normal text-gray-400">/ month</span></p>
-
-        <ul className="space-y-3">
-          {selectedPlan.features.map((item, i) => (
-            <li key={i} className="flex items-center gap-3 text-sm text-gray-300">
-              <CheckCircle2 size={16} className="text-brand-primary" /> {item}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Trust */}
-      <div className="bg-gray-900/50 rounded-lg p-3 flex items-center gap-3 border border-white/5">
-        <div className="p-2 bg-brand-card rounded-full text-brand-primary">
-          <Shield size={16} />
-        </div>
-        <div>
-          <h4 className="text-sm font-bold text-white">Maximum Discretion</h4>
-          <p className="text-xs text-gray-500">Billed securely as "BT-Services"</p>
-        </div>
-        <Lock size={14} className="ml-auto text-green-500" />
-      </div>
-
-      {/* Payment Methods */}
-      <div className="space-y-3">
-        <h3 className="font-bold text-sm text-gray-400 uppercase">Payment Method</h3>
-
-        <div
-          onClick={() => setMethod('card')}
-          className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${method === 'card' ? 'border-brand-primary bg-brand-primary/10' : 'border-white/10 bg-brand-card'}`}
-        >
-          <div className="flex items-center gap-3">
-            <CreditCard size={20} />
-            <span className="font-medium">Credit Card</span>
-          </div>
-          <div className="flex gap-1 opacity-50">
-            <div className="w-6 h-4 bg-gray-600 rounded"></div>
-            <div className="w-6 h-4 bg-gray-600 rounded"></div>
-          </div>
-        </div>
-
-        {method === 'card' && (
-          <div className="p-4 bg-black/20 rounded-xl space-y-3 animate-in fade-in slide-in-from-top-2">
-            <input type="text" placeholder="Card Number" className="w-full bg-brand-card border border-white/10 rounded-lg p-3 text-sm outline-none focus:border-brand-primary" />
-            <div className="flex gap-3">
-              <input type="text" placeholder="MM/YY" className="w-1/2 bg-brand-card border border-white/10 rounded-lg p-3 text-sm outline-none focus:border-brand-primary" />
-              <input type="text" placeholder="CVC" className="w-1/2 bg-brand-card border border-white/10 rounded-lg p-3 text-sm outline-none focus:border-brand-primary" />
-            </div>
-          </div>
-        )}
-
-        <div
-          onClick={() => setMethod('paypal')}
-          className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${method === 'paypal' ? 'border-brand-primary bg-brand-primary/10' : 'border-white/10 bg-brand-card'}`}
-        >
-          <Wallet size={20} />
-          <span className="font-medium">PayPal</span>
-        </div>
-
-        <div
-          onClick={() => setMethod('crypto')}
-          className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${method === 'crypto' ? 'border-brand-primary bg-brand-primary/10' : 'border-white/10 bg-brand-card'}`}
-        >
-          <div className="flex items-center gap-3">
-            <Bitcoin size={20} />
-            <span className="font-medium">Crypto (BTC/ETH)</span>
-          </div>
-          <span className="text-[10px] bg-green-900 text-green-400 px-2 py-1 rounded border border-green-700">Extra Discrete</span>
-        </div>
-      </div>
-
-      <div className="pt-4">
-        <Button fullWidth variant="primary" className="py-4 text-lg" onClick={handleSubscribe}>
-          Subscribe & Pay securely
-        </Button>
-        <p className="text-center text-[10px] text-gray-500 mt-4 max-w-xs mx-auto">
-          By confirming, you agree to our Terms of Service. Cancel anytime from your account settings.
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Header */}
+      <div className="text-center mb-16">
+        <h1 className="text-4xl font-bold mb-4">Wählen Sie Ihren Plan</h1>
+        <p className="text-gray-400 max-w-2xl mx-auto">
+          Professionelle KI-Werkzeuge für Ihre podologische Praxis.
+          Jederzeit kündbar. Keine versteckten Kosten.
         </p>
       </div>
+
+      {/* Pricing Grid */}
+      <div className="grid md:grid-cols-3 gap-8 mb-12">
+        {PLANS.map((plan) => {
+          const isSelected = selectedPlanId === plan.id;
+          const isRecommended = plan.id === 'pro';
+
+          return (
+            <div
+              key={plan.id}
+              onClick={() => handlePlanSelect(plan.id)}
+              className={`relative rounded-2xl p-8 border cursor-pointer transition-all duration-300 flex flex-col h-full ${isSelected
+                  ? 'bg-brand-card border-brand-primary shadow-2xl shadow-purple-900/30 ring-1 ring-brand-primary transform scale-[1.02]'
+                  : 'bg-brand-card/50 border-white/10 hover:border-white/20 hover:bg-brand-card'
+                }`}
+            >
+              {isRecommended && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-brand-primary text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                  EMPFOHLEN
+                </div>
+              )}
+
+              <div className="mb-6">
+                <h3 className={`text-xl font-bold mb-2 ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+                  {plan.name}
+                </h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-bold text-white">{plan.price}</span>
+                  <span className="text-sm text-gray-500">/ Monat</span>
+                </div>
+              </div>
+
+              <div className="flex-grow space-y-4 mb-8">
+                {plan.features.map((feature, i) => (
+                  <div key={i} className="flex items-start gap-3 text-sm">
+                    <CheckCircle2
+                      size={18}
+                      className={`flex-shrink-0 mt-0.5 ${isSelected ? 'text-brand-primary' : 'text-gray-600'}`}
+                    />
+                    <span className={isSelected ? 'text-gray-200' : 'text-gray-400'}>
+                      {feature}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className={`mt-auto pt-6 border-t ${isSelected ? 'border-white/10' : 'border-white/5'}`}>
+                <div className={`w-full py-2 rounded-lg text-center text-sm font-semibold transition-colors ${isSelected
+                    ? 'bg-brand-primary text-white'
+                    : 'bg-white/5 text-gray-400 group-hover:bg-white/10'
+                  }`}>
+                  {isSelected ? 'Ausgewählt' : 'Auswählen'}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bottom CTA */}
+      <div className="max-w-md mx-auto text-center space-y-6">
+        <Button
+          fullWidth
+          variant="primary"
+          size="lg"
+          onClick={handleCheckoutStart}
+          disabled={!selectedPlanId}
+          className={`py-4 text-lg shadow-xl transition-all ${!selectedPlanId ? 'opacity-50 cursor-not-allowed' : 'shadow-purple-900/40 hover:scale-[1.02]'
+            }`}
+        >
+          {selectedPlanId ? 'Jetzt sicher bezahlen' : 'Bitte wählen Sie einen Plan'}
+        </Button>
+
+        <div className="flex justify-center items-center gap-2 text-xs text-gray-500">
+          <Shield size={12} />
+          <span>Sichere 256-bit SSL Verschlüsselung · Jederzeit kündbar</span>
+        </div>
+      </div>
+
+      {/* Modal */}
+      <PaymentModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={handlePaymentSuccess}
+        plan={selectedPlan || null}
+      />
     </div>
   );
 };

@@ -1,168 +1,134 @@
-// components/PaymentModal.tsx
-// Modal for payment selection after plan selection
-
-import React, { useState, useEffect } from 'react';
-import { X, CreditCard, Lock, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { Shield, Lock, CreditCard, Bitcoin, Wallet, X, CheckCircle2 } from 'lucide-react';
 import { Button } from './Button';
 
 interface PaymentModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    selectedPlan: {
+    plan: {
+        id: string;
         name: string;
         price: string;
         features: string[];
-    };
-    onConfirm: (paymentMethod: string) => void;
+    } | null;
+    onClose: () => void;
+    onConfirm: () => void;
+    isOpen: boolean;
 }
 
-export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, selectedPlan, onConfirm }) => {
-    const [paymentMethod, setPaymentMethod] = useState<'card' | 'sepa'>('card');
-    const [processing, setProcessing] = useState(false);
+export const PaymentModal: React.FC<PaymentModalProps> = ({ plan, onClose, onConfirm, isOpen }) => {
+    const [method, setMethod] = useState('card');
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    // ESC key to close
-    useEffect(() => {
-        const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && !processing) onClose();
-        };
-        if (isOpen) {
-            window.addEventListener('keydown', handleEsc);
-            document.body.style.overflow = 'hidden';
-        }
-        return () => {
-            window.removeEventListener('keydown', handleEsc);
-            document.body.style.overflow = 'unset';
-        };
-    }, [isOpen, onClose, processing]);
+    if (!isOpen || !plan) return null;
 
-    if (!isOpen) return null;
-
-    const handleConfirm = async () => {
-        setProcessing(true);
-        await onConfirm(paymentMethod);
-        setProcessing(false);
+    const handlePayment = () => {
+        setIsProcessing(true);
+        // Simulate API call
+        setTimeout(() => {
+            setIsProcessing(false);
+            onConfirm();
+        }, 2000);
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-            {/* Modal Container */}
-            <div className="bg-brand-card border border-white/10 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+                onClick={onClose}
+            />
+
+            {/* Modal */}
+            <div className="relative w-full max-w-lg bg-brand-card border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
 
                 {/* Header */}
-                <div className="p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-brand-card z-10">
+                <div className="flex items-center justify-between p-6 border-b border-white/5">
                     <div>
-                        <h2 className="text-xl font-bold">Zahlungsmethode wählen</h2>
-                        <p className="text-sm text-gray-400 mt-1">Sichere Bezahlung über Stripe</p>
+                        <h2 className="text-xl font-bold">Checkout</h2>
+                        <p className="text-sm text-gray-400">Secure Payment for {plan.name} Plan</p>
                     </div>
                     <button
                         onClick={onClose}
-                        disabled={processing}
-                        className="p-2 rounded-full hover:bg-white/10 transition-colors disabled:opacity-50"
-                        aria-label="Close"
+                        className="p-2 hover:bg-white/5 rounded-lg transition-colors text-gray-400 hover:text-white"
                     >
                         <X size={20} />
                     </button>
                 </div>
 
-                {/* Plan Summary */}
-                <div className="p-6 bg-brand-primary/5 border-b border-white/10">
-                    <div className="flex items-center justify-between">
+                <div className="p-6 space-y-6">
+                    {/* Plan Summary */}
+                    <div className="bg-brand-bg rounded-xl p-4 border border-brand-primary/20 flex items-center justify-between">
                         <div>
-                            <h3 className="font-bold text-lg">{selectedPlan.name}</h3>
-                            <p className="text-sm text-gray-400">Monatliches Abonnement</p>
+                            <h3 className="font-bold text-white">{plan.name} Membership</h3>
+                            <p className="text-xs text-brand-primary">Billed monthly</p>
                         </div>
-                        <div className="text-right">
-                            <div className="text-3xl font-bold text-brand-primary">{selectedPlan.price}</div>
-                            <p className="text-xs text-gray-400">pro Monat</p>
-                        </div>
+                        <span className="text-xl font-bold">{plan.price}</span>
                     </div>
-                </div>
 
-                {/* Payment Method Selection */}
-                <div className="p-6 space-y-4">
-                    <label className="block text-sm font-semibold text-gray-300 mb-3">Zahlungsmethode</label>
+                    {/* Payment Methods */}
+                    <div className="space-y-3">
+                        <label className="text-xs font-semibold text-gray-400 uppercase">Payment Method</label>
 
-                    <div className="grid gap-3">
-                        {/* Credit Card */}
-                        <button
-                            onClick={() => setPaymentMethod('card')}
-                            disabled={processing}
-                            className={`p-4 rounded-xl border transition-colors text-left ${paymentMethod === 'card'
-                                    ? 'border-brand-primary bg-brand-primary/10'
-                                    : 'border-white/10 hover:border-white/20'
-                                } disabled:opacity-50`}
+                        <div
+                            onClick={() => setMethod('card')}
+                            className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${method === 'card' ? 'border-brand-primary bg-brand-primary/10' : 'border-white/10 bg-brand-card hover:border-white/20'}`}
                         >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <CreditCard size={20} className="text-brand-primary" />
-                                    <div>
-                                        <div className="font-semibold">Kreditkarte</div>
-                                        <div className="text-xs text-gray-400">Visa, Mastercard, Amex</div>
-                                    </div>
-                                </div>
-                                {paymentMethod === 'card' && <Check size={20} className="text-brand-primary" />}
+                            <div className="flex items-center gap-3">
+                                <CreditCard size={20} className={method === 'card' ? 'text-brand-primary' : 'text-gray-400'} />
+                                <span className="font-medium text-sm">Credit Card</span>
                             </div>
-                        </button>
+                            <div className="flex gap-1 opacity-50">
+                                <div className="w-6 h-4 bg-gray-600 rounded"></div>
+                                <div className="w-6 h-4 bg-gray-600 rounded"></div>
+                            </div>
+                        </div>
 
-                        {/* SEPA */}
-                        <button
-                            onClick={() => setPaymentMethod('sepa')}
-                            disabled={processing}
-                            className={`p-4 rounded-xl border transition-colors text-left ${paymentMethod === 'sepa'
-                                    ? 'border-brand-primary bg-brand-primary/10'
-                                    : 'border-white/10 hover:border-white/20'
-                                } disabled:opacity-50`}
+                        {method === 'card' && (
+                            <div className="p-4 bg-black/20 rounded-xl space-y-3 animate-in fade-in slide-in-from-top-2 border border-white/5">
+                                <input type="text" placeholder="Card Number" className="w-full bg-brand-bg border border-white/10 rounded-lg p-3 text-sm outline-none focus:border-brand-primary transition-colors text-white placeholder-gray-500" />
+                                <div className="flex gap-3">
+                                    <input type="text" placeholder="MM/YY" className="w-1/2 bg-brand-bg border border-white/10 rounded-lg p-3 text-sm outline-none focus:border-brand-primary transition-colors text-white placeholder-gray-500" />
+                                    <input type="text" placeholder="CVC" className="w-1/2 bg-brand-bg border border-white/10 rounded-lg p-3 text-sm outline-none focus:border-brand-primary transition-colors text-white placeholder-gray-500" />
+                                </div>
+                            </div>
+                        )}
+
+                        <div
+                            onClick={() => setMethod('paypal')}
+                            className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${method === 'paypal' ? 'border-brand-primary bg-brand-primary/10' : 'border-white/10 bg-brand-card hover:border-white/20'}`}
                         >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <svg className="w-5 h-5 text-brand-primary" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
-                                    </svg>
-                                    <div>
-                                        <div className="font-semibold">SEPA-Lastschrift</div>
-                                        <div className="text-xs text-gray-400">Bankeinzug (nur EU)</div>
-                                    </div>
-                                </div>
-                                {paymentMethod === 'sepa' && <Check size={20} className="text-brand-primary" />}
-                            </div>
-                        </button>
-                    </div>
+                            <Wallet size={20} className={method === 'paypal' ? 'text-brand-primary' : 'text-gray-400'} />
+                            <span className="font-medium text-sm">PayPal</span>
+                        </div>
 
-                    {/* Trust Signals */}
-                    <div className="flex items-center gap-4 mt-6 p-4 bg-white/5 rounded-lg">
-                        <Lock size={16} className="text-green-500" />
-                        <div className="text-xs text-gray-400">
-                            <strong className="text-white">Sichere Zahlung:</strong> Alle Zahlungen werden verschlüsselt über Stripe verarbeitet. Wir speichern keine Zahlungsdaten.
+                        <div
+                            onClick={() => setMethod('crypto')}
+                            className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${method === 'crypto' ? 'border-brand-primary bg-brand-primary/10' : 'border-white/10 bg-brand-card hover:border-white/20'}`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <Bitcoin size={20} className={method === 'crypto' ? 'text-brand-primary' : 'text-gray-400'} />
+                                <span className="font-medium text-sm">Crypto (BTC/ETH)</span>
+                            </div>
+                            <span className="text-[10px] bg-green-900/50 text-green-400 px-2 py-1 rounded border border-green-700/50">Extra Discrete</span>
                         </div>
                     </div>
-                </div>
 
-                {/* Footer Actions */}
-                <div className="p-6 border-t border-white/10 flex gap-3">
+                    {/* Trust Banner */}
+                    <div className="flex items-center gap-3 text-xs text-gray-500 bg-brand-bg/50 p-3 rounded-lg border border-white/5">
+                        <Lock size={12} className="text-green-500" />
+                        <span>End-to-end encrypted · SSL Secure · Discrete billing</span>
+                    </div>
+
                     <Button
-                        variant="secondary"
-                        onClick={onClose}
-                        disabled={processing}
-                        className="flex-1"
-                    >
-                        Abbrechen
-                    </Button>
-                    <Button
+                        fullWidth
                         variant="primary"
-                        onClick={handleConfirm}
-                        isLoading={processing}
-                        className="flex-1"
+                        onClick={handlePayment}
+                        isLoading={isProcessing}
+                        className="py-4 text-base shadow-xl shadow-purple-900/20"
                     >
-                        Jetzt abonnieren
+                        {isProcessing ? 'Processing...' : `Pay ${plan.price}`}
                     </Button>
                 </div>
             </div>
-
-            {/* Click outside to close */}
-            <div
-                className="absolute inset-0 -z-10"
-                onClick={() => !processing && onClose()}
-            />
         </div>
     );
 };

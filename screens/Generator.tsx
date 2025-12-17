@@ -425,6 +425,5 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
         </div>
       </div>
     </div>
-    </div >
   );
 };

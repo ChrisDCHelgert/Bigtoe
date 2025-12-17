@@ -1,7 +1,7 @@
 // services/image/providers/PollinationsProvider.ts
 
 import { ImageProvider, GenerationRequest, GenerationResult, ValidationResult, ProviderCapabilities } from '../types';
-import { FORBIDDEN_WORDS } from '../../constants';
+import { FORBIDDEN_WORDS } from '../../../constants';
 
 export class PollinationsProvider implements ImageProvider {
     readonly id = 'pollinations-flux';

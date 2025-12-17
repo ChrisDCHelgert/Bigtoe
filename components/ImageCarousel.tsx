@@ -32,7 +32,7 @@ export const ImageCarousel: React.FC = () => {
                 {images.map((src, index) => (
                     <div
                         key={index}
-                        className="flex-shrink-0 w-[200px] h-[300px] mx-2 relative rounded-xl overflow-hidden border border-white/5 shadow-lg opacity-80 hover:opacity-100 hover:scale-105 transition-all duration-500"
+                        className="flex-shrink-0 w-[110px] h-[160px] mx-1.5 relative rounded-lg overflow-hidden border border-white/5 shadow-lg opacity-90 hover:opacity-100 hover:scale-105 transition-all duration-500"
                     >
                         <img
                             src={src}

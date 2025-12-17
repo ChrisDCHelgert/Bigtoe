@@ -75,6 +75,15 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
     setIsFavorite(isNowFavorite);
   };
 
+  const handleOpenModal = () => {
+    if (!resultImage) {
+      console.warn("[Generator] Attempted to open modal without image");
+      return;
+    }
+    console.log("[Generator] Opening fullscreen modal for:", resultImage.substring(0, 50));
+    setIsModalOpen(true);
+  };
+
   const handleStylePreset = (preset: typeof STYLE_PRESETS[0]) => {
     const matchingAngle = CAMERA_ANGLES.find(a => a.value === preset.params.angle) || CAMERA_ANGLES[1];
     setParams(prev => ({
@@ -508,7 +517,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                       alt="Generated"
                       onLoad={handleImageLoad}
                       onError={handleImageError}
-                      onClick={() => resultImage && setIsModalOpen(true)}
+                      onClick={handleOpenModal}
                       className={`w-full h-full object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'} cursor-zoom-in`}
                     />
 
@@ -522,7 +531,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                         <Heart size={14} className={isFavorite ? "fill-current" : ""} />
                       </Button>
                       <Button
-                        onClick={() => resultImage && setIsModalOpen(true)}
+                        onClick={(e) => { e.stopPropagation(); handleOpenModal(); }}
                         size="sm" variant="secondary"
                         className="backdrop-blur-md bg-white/10 border-white/20 pointer-events-auto"
                       >
@@ -579,6 +588,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         imageUrl={resultImage || ''}
+        showGalleryActions={true}
       />
     </div>
   );

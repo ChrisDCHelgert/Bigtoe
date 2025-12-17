@@ -74,9 +74,13 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
     try {
       setLoading(true);
 
+      // Construct detailed prompt from params
+      const constructedPrompt = `Professional podiatry photo, ${params.gender} feet, size ${params.footSize}, ${params.skinTone} skin tone, ${params.view} view, ${params.lighting}, ${params.scene} setting. ${params.customPrompt}`;
+
       // Call image generation service
       const result = await imageService.generateImage({
         ...params,
+        prompt: constructedPrompt, // Explicitly map prompt for API
         quality: selectedPreset,
         userEmail: user.email || 'anonymous@bigtoe.ai',
         isPremium: user.isPremium,
@@ -193,10 +197,11 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                     value={params.side}
                     onChange={(e) => setParams({ ...params, side: e.target.value as any })}
                     className="w-full bg-brand-bg border border-white/10 rounded-lg p-3 text-sm text-white focus:border-brand-primary outline-none appearance-none cursor-pointer hover:border-white/30 transition-colors"
+                    style={{ backgroundColor: '#0f172a', color: 'white' }}
                   >
-                    <option value="left" className="bg-brand-bg text-white">Links</option>
-                    <option value="right" className="bg-brand-bg text-white">Rechts</option>
-                    <option value="both" className="bg-brand-bg text-white">Beide</option>
+                    <option value="left" style={{ backgroundColor: '#0f172a', color: 'white' }}>Links</option>
+                    <option value="right" style={{ backgroundColor: '#0f172a', color: 'white' }}>Rechts</option>
+                    <option value="both" style={{ backgroundColor: '#0f172a', color: 'white' }}>Beide</option>
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -205,11 +210,12 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                     value={params.cameraAngle}
                     onChange={(e) => setParams({ ...params, cameraAngle: e.target.value as any })}
                     className="w-full bg-brand-bg border border-white/10 rounded-lg p-3 text-sm text-white focus:border-brand-primary outline-none appearance-none cursor-pointer hover:border-white/30 transition-colors"
+                    style={{ backgroundColor: '#0f172a', color: 'white' }}
                   >
-                    <option value="top" className="bg-brand-bg text-white">Von oben</option>
-                    <option value="side" className="bg-brand-bg text-white">Seitlich</option>
-                    <option value="45" className="bg-brand-bg text-white">45°</option>
-                    <option value="macro" className="bg-brand-bg text-white">Makro</option>
+                    <option value="top" style={{ backgroundColor: '#0f172a', color: 'white' }}>Von oben</option>
+                    <option value="side" style={{ backgroundColor: '#0f172a', color: 'white' }}>Seitlich</option>
+                    <option value="45" style={{ backgroundColor: '#0f172a', color: 'white' }}>45°</option>
+                    <option value="macro" style={{ backgroundColor: '#0f172a', color: 'white' }}>Makro</option>
                   </select>
                 </div>
               </div>
@@ -232,11 +238,12 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
                   value={params.scene}
                   onChange={(e) => setParams({ ...params, scene: e.target.value })}
                   className="w-full bg-brand-bg border border-white/10 rounded-lg p-3 text-sm text-white focus:border-brand-primary outline-none appearance-none cursor-pointer hover:border-white/30 transition-colors"
+                  style={{ backgroundColor: '#0f172a', color: 'white' }}
                 >
-                  <option value="Indoor" className="bg-brand-bg text-white">Innenraum</option>
-                  <option value="Outdoor" className="bg-brand-bg text-white">Außen</option>
-                  <option value="Beach" className="bg-brand-bg text-white">Strand</option>
-                  <option value="Studio" className="bg-brand-bg text-white">Studio</option>
+                  <option value="Indoor" style={{ backgroundColor: '#0f172a', color: 'white' }}>Innenraum</option>
+                  <option value="Outdoor" style={{ backgroundColor: '#0f172a', color: 'white' }}>Außen</option>
+                  <option value="Beach" style={{ backgroundColor: '#0f172a', color: 'white' }}>Strand</option>
+                  <option value="Studio" style={{ backgroundColor: '#0f172a', color: 'white' }}>Studio</option>
                 </select>
               </div>
 

@@ -155,6 +155,13 @@ const App: React.FC = () => {
               />
             }
           />
+
+          {/* Legal Pages - Accessible without authentication */}
+          <Route path="/impressum" element={<Impressum />} />
+          <Route path="/datenschutz" element={<Datenschutz />} />
+          <Route path="/agb" element={<AGB />} />
+          <Route path="/cookie-settings" element={<CookieSettings />} />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>

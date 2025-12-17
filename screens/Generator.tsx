@@ -265,14 +265,15 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
           </div>
         </div>
 
-        {/* MAIN GRID - FIXED HEIGHT & SYMMETRY (Studio Layout) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start h-[calc(100vh-220px)] min-h-[600px]">
+
+        {/* MAIN GRID - RESPONSIVE FLOW (Content determines height) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start relative">
 
           {/* LEFT: CONTROLS (8 Cols) */}
-          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
+          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
 
             {/* COLUMN A: Basics */}
-            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl overflow-y-auto custom-scrollbar h-full">
+            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl">
               <h3 className="text-xs font-bold uppercase text-gray-400 mb-5 flex items-center gap-2 tracking-wider">
                 <Settings size={14} /> Basis-Einstellungen
               </h3>
@@ -380,7 +381,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
             </div>
 
             {/* COLUMN B: Details & Vibe (Compact Accordion) */}
-            <div className="bg-brand-card p-4 rounded-2xl border border-white/5 shadow-xl overflow-y-auto custom-scrollbar h-full flex flex-col gap-4">
+            <div className="bg-brand-card p-4 rounded-2xl border border-white/5 shadow-xl flex flex-col gap-4">
               <h3 className="text-xs font-bold uppercase text-gray-400 mb-1 flex items-center gap-2 tracking-wider">
                 <Sliders size={14} /> Styling & Details
               </h3>
@@ -579,7 +580,7 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
             </div>
 
             {/* COLUMN C: Scene & Action */}
-            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl overflow-y-auto custom-scrollbar h-full">
+            <div className="bg-brand-card p-5 rounded-2xl border border-white/5 shadow-xl flex flex-col gap-6">
               <h3 className="text-xs font-bold uppercase text-gray-400 mb-5 flex items-center gap-2 tracking-wider">
                 <Camera size={14} /> Szene & Kamera
               </h3>
@@ -648,11 +649,11 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
             </div>
           </div>
 
-          {/* RIGHT: PREVIEW (4 Cols, Fixed Height) */}
-          <div className="lg:col-span-4 h-full flex flex-col">
+          {/* RIGHT: PREVIEW (4 Cols, Sticky to follow scroll) */}
+          <div className="lg:col-span-4 flex flex-col sticky top-6">
             <div
               ref={previewRef}
-              className="bg-brand-card rounded-2xl border border-white/5 shadow-2xl overflow-hidden group flex-1 flex flex-col relative"
+              className="bg-brand-card rounded-2xl border border-white/5 shadow-2xl overflow-hidden group flex flex-col relative min-h-[500px]"
             >
               <div className="p-1 bg-gradient-to-r from-brand-primary via-purple-500 to-pink-500 opacity-20 h-1"></div>
 

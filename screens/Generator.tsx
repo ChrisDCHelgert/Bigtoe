@@ -27,7 +27,7 @@ interface GeneratorProps {
 
 import { FavoritesService } from '../services/FavoritesService';
 import { GalleryService } from '../services/GalleryService';
-import { PromptBuilder } from '../services/image/PromptBuilder';
+import { PromptBuilder, PromptSettings } from '../services/image/PromptBuilder';
 
 
 
@@ -39,9 +39,51 @@ export const Generator: React.FC<GeneratorProps> = ({ user, handleConsumption, o
   const [retryCount, setRetryCount] = useState(0);
   const [validationMsg, setValidationMsg] = useState('');
 
-  // ... (rest of state)
+  const [params, setParams] = useState<PromptSettings>({
+    gender: 'female',
+    side: 'both',
+    footSize: 38,
+    skinTone: SKIN_TONE_PRESETS[1],
+    angle: CAMERA_ANGLES[1],
+    visualDetails: [],
+    scene: SCENE_OPTIONS[0],
+    lighting: LIGHTING_CHIPS[0],
+    quality: 'standard'
+  });
 
-  // ...
+  const [resultImage, setResultImage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  // Toggle helpers
+  const toggleDetail = (detail: string) => {
+    setParams(prev => {
+      const exists = prev.visualDetails.includes(detail);
+      return {
+        ...prev,
+        visualDetails: exists
+          ? prev.visualDetails.filter(d => d !== detail)
+          : [...prev.visualDetails, detail]
+      };
+    });
+  };
+
+  const toggleFavorite = async () => {
+    if (!resultImage) return;
+    setIsFavorite(!isFavorite);
+    if (!isFavorite) {
+      await FavoritesService.addFavorite(resultImage); // Mock
+    } else {
+      await FavoritesService.removeFavorite(resultImage); // Mock
+    }
+  };
+
+  const handleOpenModal = () => {
+    if (resultImage) setIsModalOpen(true);
+  };
 
   // MOCK VALIDATION SERVICE (Client-side simulation)
   // In a real app, this would send the URL to a backend with GPT-4 Vision

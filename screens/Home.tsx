@@ -20,7 +20,7 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
 
       {/* Desktop: 2-column grid, Mobile: Stack */}
       <div className="grid lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-brand-card rounded-2xl p-6 border border-white/5 relative overflow-hidden">
+        <div className="max-w-lg bg-brand-card rounded-2xl p-6 border border-white/5 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-3">
             <span className={`text-white text-xs px-2 py-1 rounded font-medium ${user.isPremium ? 'bg-brand-primary' : 'bg-white/10'}`}>
               {user.isPremium ? 'PREMIUM' : 'FREE TRIAL'}
